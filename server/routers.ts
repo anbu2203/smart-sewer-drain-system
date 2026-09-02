@@ -2,8 +2,9 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { invokeLLM } from "./_core/llm";
 import { z } from "zod";
-import { listTicketHistory, saveTicketHistory } from "./db";
+import { listEmployeeProfiles, listTicketAssignments, listTicketHistory, saveTicketHistory, seedEmployeeProfiles, upsertTicketAssignment } from "./db";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -17,6 +18,27 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+  }),
+
+  jarvis: router({
+    ask: publicProcedure.input(z.object({ question: z.string().min(1).max(1200), context: z.string().max(5000).optional() })).mutation(async ({ input }) => {
+      const response = await invokeLLM({ messages: [
+        { role: "system", content: "You are JARVIS, the SSOP Smart Sewer Operations Platform assistant. Explain the system clearly to administrators and employees. Never invent live data; say when information is illustrative. Keep answers concise, practical, and safety-conscious." },
+        { role: "user", content: `${input.context ? `Current SSOP context:
+${input.context}
+
+` : ""}${input.question}` },
+      ] });
+      const content = response.choices?.[0]?.message?.content;
+      return { answer: typeof content === "string" ? content : "JARVIS could not produce an answer right now." };
+    }),
+  }),
+
+  workforce: router({
+    profiles: publicProcedure.query(() => listEmployeeProfiles()),
+    assignments: publicProcedure.query(() => listTicketAssignments()),
+    seedProfiles: publicProcedure.input(z.object({ profiles: z.array(z.object({ crewName: z.string().min(1).max(80), displayName: z.string().min(1).max(120) })) })).mutation(({ input }) => seedEmployeeProfiles(input.profiles)),
+    assign: publicProcedure.input(z.object({ ticketId: z.string().min(1).max(32), crewName: z.string().min(1).max(80), assignedBy: z.string().max(120).optional() })).mutation(({ input }) => upsertTicketAssignment(input.ticketId, input.crewName, input.assignedBy)),
   }),
 
   ticketHistory: router({

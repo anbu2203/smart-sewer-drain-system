@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertTicketHistory, InsertUser, ticketHistory, users } from "../drizzle/schema";
+import { EmployeeProfile, InsertTicketHistory, InsertUser, employeeProfiles, ticketAssignments, ticketHistory, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -103,4 +103,37 @@ export async function saveTicketHistory(entry: InsertTicketHistory) {
   if (!db) throw new Error("Database is not available");
   await db.insert(ticketHistory).values(entry);
   return { success: true } as const;
+}
+
+
+export async function listEmployeeProfiles(): Promise<EmployeeProfile[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(employeeProfiles).orderBy(employeeProfiles.crewName);
+}
+
+export async function listTicketAssignments() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(ticketAssignments).orderBy(desc(ticketAssignments.assignedAt));
+}
+
+export async function seedEmployeeProfiles(profiles: { crewName: string; displayName: string }[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  for (const profile of profiles) {
+    await db.insert(employeeProfiles).values(profile).onDuplicateKeyUpdate({ set: { displayName: profile.displayName } });
+  }
+  return listEmployeeProfiles();
+}
+
+export async function upsertTicketAssignment(ticketId: string, crewName: string, assignedBy = "SSOP auto-assignment") {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const existing = await db.select().from(ticketAssignments).where(eq(ticketAssignments.ticketId, ticketId)).limit(1);
+  if (existing.length) {
+    await db.update(ticketAssignments).set({ crewName, assignedBy }).where(eq(ticketAssignments.ticketId, ticketId));
+  } else {
+    await db.insert(ticketAssignments).values({ ticketId, crewName, assignedBy });
+  }
 }

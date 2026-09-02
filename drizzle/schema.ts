@@ -43,3 +43,22 @@ export const ticketHistory = mysqlTable("ticket_history", {
 
 export type TicketHistory = typeof ticketHistory.$inferSelect;
 export type InsertTicketHistory = typeof ticketHistory.$inferInsert;
+
+
+export const employeeProfiles = mysqlTable("employee_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  crewName: varchar("crewName", { length: 80 }).notNull().unique(),
+  displayName: varchar("displayName", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const ticketAssignments = mysqlTable("ticket_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  ticketId: varchar("ticketId", { length: 32 }).notNull().unique(),
+  crewName: varchar("crewName", { length: 80 }).notNull(),
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+  assignedBy: varchar("assignedBy", { length: 120 }).notNull().default("SSOP auto-assignment"),
+});
+
+export type EmployeeProfile = typeof employeeProfiles.$inferSelect;
+export type TicketAssignment = typeof ticketAssignments.$inferSelect;

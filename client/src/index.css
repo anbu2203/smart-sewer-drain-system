@@ -117,3 +117,30 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); out
 .employee-notification p { margin:5px 0 0; color:#9cb4b1; font-size:11px; }
 .notification-proof { display:flex; flex-direction:column; align-items:flex-end; gap:6px; color:#9cb4b1; font:10px var(--mono); text-align:right; }
 @media (max-width: 620px) { .employee-banner, .employee-notification { align-items:flex-start; flex-direction:column; } .notification-proof { align-items:flex-start; text-align:left; } }
+
+.login-screen { min-height:100vh; display:grid; place-items:center; padding:24px; background:radial-gradient(circle at 20% 10%,rgba(43,146,133,.18),transparent 35%),#061518; }
+.login-card { width:min(430px,100%); padding:32px; border:1px solid rgba(109,224,202,.2); border-radius:18px; background:rgba(10,29,33,.94); box-shadow:0 24px 80px rgba(0,0,0,.35); }
+.login-card .brand-lockup { margin-bottom:34px; }
+.login-card h1 { color:#e8f7f3; margin:10px 0 6px; font-size:28px; }
+.login-card > p { color:#9cb4b1; margin:0 0 24px; font-size:13px; }
+.login-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; margin-bottom:18px; border-radius:8px; background:#071c20; }
+.login-tabs button { border:0; border-radius:6px; padding:10px; color:#92aaa7; background:transparent; cursor:pointer; font:11px var(--mono); }
+.login-tabs button.active { color:#062321; background:#6de0ca; }
+.login-field { display:grid; gap:7px; color:#9cb4b1; font:10px var(--mono); margin-bottom:18px; }
+.login-field input, .login-field select { color:#e6f5f1; background:#071c20; border:1px solid rgba(120,169,164,.25); border-radius:7px; padding:11px; outline:none; }
+.login-note { display:block; margin-top:14px; color:#6f8986; text-align:center; font-size:10px; }
+.jarvis-shell { max-width:820px; padding:26px; border:1px solid rgba(109,224,202,.2); border-radius:16px; background:linear-gradient(135deg,rgba(13,55,57,.86),rgba(9,28,33,.92)); }
+.jarvis-orb { width:58px; height:58px; display:grid; place-items:center; color:#061c1d; border-radius:50%; background:linear-gradient(145deg,#77f0d1,#39b8a7); box-shadow:0 0 34px rgba(67,217,187,.3); }
+.jarvis-copy h2 { margin:18px 0 8px; color:#e8f7f3; font-size:24px; }
+.jarvis-copy p { max-width:690px; min-height:44px; color:#b1cbc7; line-height:1.65; font-size:13px; }
+.jarvis-input { display:flex; gap:8px; margin-top:22px; }
+.jarvis-input input { flex:1; min-width:0; color:#e8f7f3; background:#071c20; border:1px solid rgba(120,169,164,.25); border-radius:7px; padding:12px; outline:none; }
+.jarvis-suggestions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.jarvis-suggestions button { border:1px solid rgba(109,224,202,.22); border-radius:999px; padding:7px 10px; color:#9ac7bf; background:transparent; cursor:pointer; font:10px var(--mono); }
+.voice-control { display:flex; align-items:center; gap:6px; border:1px solid rgba(109,224,202,.2); border-radius:6px; padding:7px 9px; color:#9cb4b1; background:transparent; cursor:pointer; font:10px var(--mono); }
+.voice-control.active { color:#6de0ca; border-color:#6de0ca; }
+@media (max-width:620px) { .login-card { padding:24px; } .jarvis-input { flex-direction:column; } }
+
+.role-switcher select { color:#9cb4b1; background:#071c20; border:1px solid rgba(120,169,164,.22); border-radius:6px; padding:6px 8px; font:10px var(--mono); }
+.voice-control { white-space:nowrap; }
+@media (max-width: 900px) { .voice-control { display:none; } }

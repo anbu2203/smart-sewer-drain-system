@@ -15,6 +15,13 @@
       "when": 1788345939333,
       "tag": "0001_flowery_mephisto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1788347001981,
+      "tag": "0002_eminent_magik",
+      "breakpoints": true
     }
   ]
 }
