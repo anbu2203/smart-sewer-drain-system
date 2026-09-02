@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { z } from "zod";
-import { listEmployeeProfiles, listTicketAssignments, listTicketHistory, saveTicketHistory, seedEmployeeProfiles, upsertTicketAssignment } from "./db";
+import { listEmployeeProfiles, listTicketAssignments, listTicketHistory, listTicketStatuses, saveTicketHistory, seedEmployeeProfiles, upsertTicketAssignment, upsertTicketStatus } from "./db";
 
 async function askChatGPT(question: string, context?: string) {
   const key = process.env.OPENAI_API_KEY;
@@ -61,6 +61,8 @@ ${input.context}
     assignments: publicProcedure.query(() => listTicketAssignments()),
     seedProfiles: publicProcedure.input(z.object({ profiles: z.array(z.object({ crewName: z.string().min(1).max(80), displayName: z.string().min(1).max(120) })) })).mutation(({ input }) => seedEmployeeProfiles(input.profiles)),
     assign: publicProcedure.input(z.object({ ticketId: z.string().min(1).max(32), crewName: z.string().min(1).max(80), assignedBy: z.string().max(120).optional() })).mutation(({ input }) => upsertTicketAssignment(input.ticketId, input.crewName, input.assignedBy)),
+    statuses: publicProcedure.query(() => listTicketStatuses()),
+    updateStatus: publicProcedure.input(z.object({ ticketId: z.string().min(1).max(32), status: z.string().min(1).max(32), updatedBy: z.string().max(120).optional() })).mutation(({ input }) => upsertTicketStatus(input.ticketId, input.status, input.updatedBy)),
   }),
 
   ticketHistory: router({

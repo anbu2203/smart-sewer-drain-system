@@ -22,6 +22,13 @@
       "when": 1788347001981,
       "tag": "0002_eminent_magik",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1788348944346,
+      "tag": "0003_stormy_boomerang",
+      "breakpoints": true
     }
   ]
 }

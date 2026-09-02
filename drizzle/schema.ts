@@ -62,3 +62,12 @@ export const ticketAssignments = mysqlTable("ticket_assignments", {
 
 export type EmployeeProfile = typeof employeeProfiles.$inferSelect;
 export type TicketAssignment = typeof ticketAssignments.$inferSelect;
+
+export const ticketStatuses = mysqlTable("ticket_statuses", {
+  id: int("id").autoincrement().primaryKey(),
+  ticketId: varchar("ticketId", { length: 32 }).notNull().unique(),
+  status: varchar("status", { length: 32 }).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedBy: varchar("updatedBy", { length: 120 }).notNull().default("JARVIS command"),
+});
+export type TicketStatus = typeof ticketStatuses.$inferSelect;

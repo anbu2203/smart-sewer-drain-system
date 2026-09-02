@@ -147,3 +147,19 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); out
 
 .login-voice { display:flex; justify-content:center; margin-top:14px; }
 .login-voice .voice-control { color:#6de0ca; border-color:rgba(109,224,202,.28); }
+
+.jarvis-shell { position:relative; overflow:hidden; transition:box-shadow .2s ease, border-color .2s ease; }
+.jarvis-shell.is-listening { border-color:#6de0ca; box-shadow:0 0 0 1px rgba(109,224,202,.18), 0 0 42px rgba(109,224,202,.16); }
+.jarvis-shell.is-speaking { border-color:#b495ff; box-shadow:0 0 0 1px rgba(180,149,255,.18), 0 0 42px rgba(180,149,255,.15); }
+.jarvis-waveform { position:absolute; inset:auto 0 -3px; height:26px; display:flex; align-items:center; justify-content:center; gap:3px; opacity:0; transition:opacity .18s ease; }
+.jarvis-waveform i { width:3px; height:6px; border-radius:4px; background:#061c1d; }
+.jarvis-shell.is-listening .jarvis-waveform, .jarvis-shell.is-speaking .jarvis-waveform { opacity:1; }
+.jarvis-shell.is-listening .jarvis-waveform i { animation:jarvis-wave .55s ease-in-out infinite alternate; }
+.jarvis-shell.is-speaking .jarvis-waveform i { animation:jarvis-wave .38s ease-in-out infinite alternate-reverse; background:#241a3a; }
+.jarvis-waveform i:nth-child(2), .jarvis-waveform i:nth-child(6) { animation-delay:.08s; } .jarvis-waveform i:nth-child(3), .jarvis-waveform i:nth-child(5) { animation-delay:.16s; } .jarvis-waveform i:nth-child(4) { animation-delay:.24s; }
+@keyframes jarvis-wave { from { height:5px; } to { height:21px; } }
+.jarvis-command-note { display:grid; gap:8px; margin:16px 0 4px; padding:12px; border:1px solid rgba(109,224,202,.22); border-radius:9px; color:#9fc0bb; font-size:11px; }
+.jarvis-command-note strong { color:#e8f7f3; } .jarvis-command-note span { line-height:1.45; } .jarvis-command-note div { display:flex; gap:8px; flex-wrap:wrap; }
+@media (prefers-reduced-motion: reduce) { .jarvis-waveform i { animation:none !important; } }
+
+.jarvis-live-clock { display:block; margin-top:8px; color:#6faaa0; font:10px var(--mono); }
