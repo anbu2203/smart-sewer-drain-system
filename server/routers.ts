@@ -6,6 +6,26 @@ import { invokeLLM } from "./_core/llm";
 import { z } from "zod";
 import { listEmployeeProfiles, listTicketAssignments, listTicketHistory, saveTicketHistory, seedEmployeeProfiles, upsertTicketAssignment } from "./db";
 
+async function askChatGPT(question: string, context?: string) {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return null;
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model: "gpt-4o-mini", temperature: 0.2, messages: [
+        { role: "system", content: "You are JARVIS, the SSOP Smart Sewer Operations Platform assistant. Explain the system clearly to administrators and employees. Never invent live data; say when information is illustrative. Keep answers concise, practical, and safety-conscious." },
+        { role: "user", content: `${context ? `Current SSOP context:\n${context}\n\n` : ""}${question}` },
+      ] }),
+    });
+    if (!response.ok) return null;
+    const body = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+    return body.choices?.[0]?.message?.content ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
@@ -22,6 +42,8 @@ export const appRouter = router({
 
   jarvis: router({
     ask: publicProcedure.input(z.object({ question: z.string().min(1).max(1200), context: z.string().max(5000).optional() })).mutation(async ({ input }) => {
+      const externalAnswer = await askChatGPT(input.question, input.context);
+      if (externalAnswer) return { answer: externalAnswer, provider: "ChatGPT" as const };
       const response = await invokeLLM({ messages: [
         { role: "system", content: "You are JARVIS, the SSOP Smart Sewer Operations Platform assistant. Explain the system clearly to administrators and employees. Never invent live data; say when information is illustrative. Keep answers concise, practical, and safety-conscious." },
         { role: "user", content: `${input.context ? `Current SSOP context:
@@ -30,7 +52,7 @@ ${input.context}
 ` : ""}${input.question}` },
       ] });
       const content = response.choices?.[0]?.message?.content;
-      return { answer: typeof content === "string" ? content : "JARVIS could not produce an answer right now." };
+      return { answer: typeof content === "string" ? content : "JARVIS could not produce an answer right now.", provider: "SSOP secure assistant" as const };
     }),
   }),
 

@@ -144,3 +144,6 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); out
 .role-switcher select { color:#9cb4b1; background:#071c20; border:1px solid rgba(120,169,164,.22); border-radius:6px; padding:6px 8px; font:10px var(--mono); }
 .voice-control { white-space:nowrap; }
 @media (max-width: 900px) { .voice-control { display:none; } }
+
+.login-voice { display:flex; justify-content:center; margin-top:14px; }
+.login-voice .voice-control { color:#6de0ca; border-color:rgba(109,224,202,.28); }
