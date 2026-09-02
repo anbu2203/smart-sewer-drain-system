@@ -18,10 +18,10 @@ const points = [
   ["MH-0427", 97, "Ward 05", "Crew Alpha", "East Canal Road", 13.1052, 80.2874], ["MH-0312", 88, "Ward 08", "Crew Delta", "Perambur High Rd", 13.0921, 80.2445], ["MH-0198", 74, "Ward 03", "Crew Bravo", "Madhavaram Link", 13.0678, 80.2834], ["MH-0534", 96, "Ward 11", "Crew Bravo", "Millers Junction", 13.1194, 80.2158], ["MH-0271", 82, "Ward 06", "Crew Charlie", "Purasawalkam", 13.0549, 80.2618], ["MH-0449", 61, "Ward 09", "Crew Delta", "Otteri Bridge", 13.0712, 80.2349], ["MH-0622", 91, "Ward 14", "Crew Charlie", "Koyambedu Market", 13.1148, 80.2645], ["MH-0710", 78, "Ward 07", "Crew Alpha", "Aminjikarai", 13.0836, 80.3057],
 ] as const;
 const alerts = [
-  { id: "ALT-2984", manhole: "MH-0427", ward: "Ward 05", fill: 97, crew: "Crew Alpha", sla: "08:42", status: "In Progress", type: "Critical" }, { id: "ALT-2983", manhole: "MH-0534", ward: "Ward 11", fill: 96, crew: "Crew Bravo", sla: "03:18", status: "Open", type: "Critical" }, { id: "ALT-2982", manhole: "MH-0312", ward: "Ward 08", fill: 88, crew: "Crew Delta", sla: "14:51", status: "In Progress", type: "Pre-alert" }, { id: "ALT-2981", manhole: "MH-0622", ward: "Ward 14", fill: 91, crew: "Crew Echo", sla: "22:07", status: "Open", type: "Pre-alert" },
+  { id: "ALT-2984", manhole: "MH-0427", ward: "Ward 05", fill: 97, crew: "Crew Alpha", sla: "08:42", status: "In Progress", type: "Critical" }, { id: "ALT-2983", manhole: "MH-0534", ward: "Ward 11", fill: 96, crew: "Crew Bravo", sla: "03:18", status: "Open", type: "Critical" }, { id: "ALT-2982", manhole: "MH-0312", ward: "Ward 08", fill: 88, crew: "Crew Delta", sla: "14:51", status: "In Progress", type: "Pre-alert" }, { id: "ALT-2981", manhole: "MH-0622", ward: "Ward 14", fill: 91, crew: "Crew Charlie", sla: "22:07", status: "Open", type: "Pre-alert" },
 ];
 const tickets = [
-  { id: "TKT-1098", manhole: "MH-0427", title: "Overflow risk — East Canal", status: "In Progress", crew: "Crew Alpha", deadline: "09:33" }, { id: "TKT-1097", manhole: "MH-0534", title: "Critical level — Millers Jct.", status: "Open", crew: "Crew Bravo", deadline: "09:28" }, { id: "TKT-1096", manhole: "MH-0312", title: "Rising level — Perambur", status: "In Progress", crew: "Crew Delta", deadline: "09:30" }, { id: "TKT-1095", manhole: "MH-0622", title: "Pre-alert review — Koyambedu", status: "Open", crew: "Crew Echo", deadline: "09:37" },
+  { id: "TKT-1098", manhole: "MH-0427", title: "Overflow risk — East Canal", status: "In Progress", crew: "Crew Alpha", deadline: "09:33" }, { id: "TKT-1097", manhole: "MH-0534", title: "Critical level — Millers Jct.", status: "Open", crew: "Crew Bravo", deadline: "09:28" }, { id: "TKT-1096", manhole: "MH-0312", title: "Rising level — Perambur", status: "In Progress", crew: "Crew Delta", deadline: "09:30" }, { id: "TKT-1095", manhole: "MH-0622", title: "Pre-alert review — Koyambedu", status: "Open", crew: "Crew Charlie", deadline: "09:37" },
 ];
 type Ticket = typeof tickets[number];
 type HistoryEntry = { id: number; ticketId: string; manhole: string; title: string; status: string; crew: string; deadline: string; ward: string | null; fill: number | null; proofPhotos: string | null; details: string | null; approvedBy: string | null; approvedAt: Date };
@@ -55,7 +55,7 @@ function buildPdf(lines: string[]) {
   const location = lines[2]?.replace("Location: ", "") ?? "Chennai network";
   const ward = lines[3]?.replace("Ward: ", "") ?? "—";
   const fill = lines[4]?.replace("Current fill: ", "") ?? "—";
-  const crew = lines[5]?.replace("Assigned crew: ", "") ?? "Unassigned";
+  const crew = lines[5]?.replace("Assigned crew: ", "") ?? "Field crew";
   const stream = [
     rect(0, 0, 612, 792, "0.035 0.075 0.085"),
     rect(0, 738, 612, 54, "0.08 0.58 0.54"),
