@@ -25,4 +25,21 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+export const ticketHistory = mysqlTable("ticket_history", {
+  id: int("id").autoincrement().primaryKey(),
+  ticketId: varchar("ticketId", { length: 32 }).notNull(),
+  manhole: varchar("manhole", { length: 32 }).notNull(),
+  title: text("title").notNull(),
+  status: varchar("status", { length: 32 }).notNull(),
+  crew: varchar("crew", { length: 80 }).notNull(),
+  deadline: varchar("deadline", { length: 16 }).notNull(),
+  ward: varchar("ward", { length: 80 }),
+  fill: int("fill"),
+  proofPhotos: text("proofPhotos"),
+  details: text("details"),
+  approvedBy: varchar("approvedBy", { length: 160 }),
+  approvedAt: timestamp("approvedAt").defaultNow().notNull(),
+});
+
+export type TicketHistory = typeof ticketHistory.$inferSelect;
+export type InsertTicketHistory = typeof ticketHistory.$inferInsert;

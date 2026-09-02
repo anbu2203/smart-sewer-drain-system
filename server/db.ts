@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertTicketHistory, InsertUser, ticketHistory, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -90,3 +90,17 @@ export async function getUserByOpenId(openId: string) {
 }
 
 // TODO: add feature queries here as your schema grows.
+
+
+export async function listTicketHistory() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(ticketHistory).orderBy(desc(ticketHistory.approvedAt));
+}
+
+export async function saveTicketHistory(entry: InsertTicketHistory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(ticketHistory).values(entry);
+  return { success: true } as const;
+}
