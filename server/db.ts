@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { EmployeeProfile, InsertTicketHistory, InsertUser, employeeProfiles, ticketAssignments, ticketHistory, ticketStatuses, users } from "../drizzle/schema";
+import { EmployeeProfile, InsertTicketHistory, InsertUser, employeeProfiles, jarvisAssignmentLogs, ticketAssignments, ticketHistory, ticketStatuses, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -150,4 +150,17 @@ export async function upsertTicketStatus(ticketId: string, status: string, updat
   if (existing.length) await db.update(ticketStatuses).set({ status, updatedBy, updatedAt: new Date() }).where(eq(ticketStatuses.ticketId, ticketId));
   else await db.insert(ticketStatuses).values({ ticketId, status, updatedBy });
   return { ticketId, status };
+}
+
+export async function listJarvisAssignmentLogs() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(jarvisAssignmentLogs).orderBy(desc(jarvisAssignmentLogs.assignedAt));
+}
+
+export async function recordJarvisAssignment(ticketId: string, crewName: string, assignedBy = "JARVIS autonomous assignment") {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(jarvisAssignmentLogs).values({ ticketId, crewName, assignedBy });
+  return { success: true } as const;
 }

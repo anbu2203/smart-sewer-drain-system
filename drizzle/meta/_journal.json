@@ -29,6 +29,13 @@
       "when": 1788348944346,
       "tag": "0003_stormy_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1788544087397,
+      "tag": "0004_parched_moonstone",
+      "breakpoints": true
     }
   ]
 }

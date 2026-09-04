@@ -71,3 +71,13 @@ export const ticketStatuses = mysqlTable("ticket_statuses", {
   updatedBy: varchar("updatedBy", { length: 120 }).notNull().default("JARVIS command"),
 });
 export type TicketStatus = typeof ticketStatuses.$inferSelect;
+
+export const jarvisAssignmentLogs = mysqlTable("jarvis_assignment_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  ticketId: varchar("ticketId", { length: 32 }).notNull(),
+  crewName: varchar("crewName", { length: 80 }).notNull(),
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+  assignedBy: varchar("assignedBy", { length: 120 }).notNull().default("JARVIS autonomous assignment"),
+});
+
+export type JarvisAssignmentLog = typeof jarvisAssignmentLogs.$inferSelect;

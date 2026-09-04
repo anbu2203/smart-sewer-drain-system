@@ -8,4 +8,11 @@ describe("jarvis.ask", () => {
     const caller = appRouter.createCaller(ctx);
     await expect(caller.jarvis.ask({ question: "" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
+
+  it("exposes the autonomous assignment history query", async () => {
+    const ctx = { req: {} as TrpcContext["req"], res: {} as TrpcContext["res"], user: undefined } as TrpcContext;
+    const caller = appRouter.createCaller(ctx);
+    const logs = await caller.workforce.jarvisAssignments();
+    expect(Array.isArray(logs)).toBe(true);
+  });
 });
