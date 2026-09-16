@@ -84,6 +84,10 @@ The initial SSOP screen supports two prototype workspaces:
 
 Admin switching from Settings requires the prototype password `1234`. Employees select a crew profile from Crew Alpha, Crew Bravo, Crew Charlie, or Crew Delta and see only the tickets assigned to that crew. Admin-only ticket commands are rejected for Employee workspaces.
 
+**Prototype Admin passcode:** `1234`
+
+This passcode is included only because it is part of the current demonstration workflow. It must be replaced with authenticated user accounts, a securely stored credential, and server-side authorization before production deployment.
+
 The role switcher is a prototype UI workflow. Production deployment should replace it with authenticated user identities, server-side role claims, stronger credential management, and policy enforcement on every protected procedure.
 
 ### Assignment persistence
