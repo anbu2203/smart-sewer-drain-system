@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { listEmployeeProfiles, listJarvisAssignmentLogs, listTicketAssignments, listTicketHistory, listTicketStatuses, recordJarvisAssignment, saveTicketHistory, seedEmployeeProfiles, upsertTicketAssignment, upsertTicketStatus } from "./db";
 
 async function askChatGPT(question: string, context?: string) {
@@ -31,6 +32,13 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    verifyAdminPasscode: publicProcedure.input(z.object({ passcode: z.string().min(1).max(128) })).mutation(({ input }) => {
+      const expected = process.env.SSOP_ADMIN_PASSCODE;
+      if (!expected || input.passcode !== expected) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Admin access denied" });
+      }
+      return { success: true } as const;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

@@ -60,7 +60,7 @@ Voice commands require an on-screen confirmation before execution. Assignment co
 
 > I did assigned the ticket TKT-1098 to Crew Bravo.
 
-The JARVIS interface includes a listening and speaking state, animated waveform treatment, live clock, typed questions, and browser microphone conversation where supported.
+The JARVIS interface includes a listening and speaking state, animated waveform treatment, live clock, typed questions, and browser microphone conversation where supported. Admins can enable **standby listening** from the JARVIS view. While enabled, the browser listens locally for the wake word `JARVIS`, then sends the following request to the assistant. JARVIS can also speak a new operational-alert summary when the active alert count increases. Standby is opt-in, persists as a local browser preference, requires microphone permission, and can be disabled at any time. Browser speech recognition cannot guarantee background or device-level always-on operation, so the page must remain open and the browser must continue the recognition session.
 
 ### JARVIS assignment activity log
 
@@ -82,7 +82,7 @@ The initial SSOP screen supports two prototype workspaces:
 | Admin | Overview, Live Map, Alerts, Tickets, Risk Analytics, Sensor Health, Citizen Reports, Ticket History, JARVIS, and Settings |
 | Employee | My Tasks, restricted Notifications, JARVIS assistance, Settings, assigned ticket drawers, proof upload, and verification submission |
 
-Admin switching from Settings requires the prototype password `1234`. Employees select a crew profile from Crew Alpha, Crew Bravo, Crew Charlie, or Crew Delta and see only the tickets assigned to that crew. Admin-only ticket commands are rejected for Employee workspaces.
+Admin switching from Settings requires the prototype password `1234`. The passcode is verified by the server against the managed `SSOP_ADMIN_PASSCODE` secret and is not compared in React source. Employees select a crew profile from Crew Alpha, Crew Bravo, Crew Charlie, or Crew Delta and see only the tickets assigned to that crew. Admin-only ticket commands are rejected for Employee workspaces.
 
 **Prototype Admin passcode:** `1234`
 
@@ -314,6 +314,12 @@ Proof photos may contain sensitive location or personnel information. A producti
 The map sewer points are illustrative when exact municipal asset coordinates are unavailable. They must not be treated as authoritative infrastructure data without validation against the municipality's asset registry.
 
 The browser voice features depend on Web Speech API support and user microphone permission. Voice commands require confirmation in the interface, but operators should still review the target ticket and crew before accepting an action.
+
+JARVIS standby is deliberately opt-in. A browser application cannot silently obtain microphone permission or promise uninterrupted device-wide listening. The wake-word detector runs through the browser's speech-recognition implementation while the SSOP page is open. It does not upload continuous raw microphone audio to SSOP; only text after the wake word is sent to the assistant workflow.
+
+The September 2026 security review removed the local `.env.local` file containing the development Google Maps key and moved Admin passcode verification to the server-side `SSOP_ADMIN_PASSCODE` secret. The repository scan found no committed Google, OpenAI, Twilio, or bearer-token credential. The Maps key is a browser-facing API key by design and must still be restricted by Google Cloud application and API restrictions.
+
+The project retains prototype authorization limitations. Several workforce and ticket-history procedures use public tRPC procedures so the local role-switching demonstration continues to work without OAuth login. A production deployment must replace that convenience with authenticated, server-side role checks, rate limiting for `jarvis.ask`, and protected assignment, status, approval, and activity-log mutations.
 
 ## Operational workflow
 
