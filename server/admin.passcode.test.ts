@@ -6,7 +6,7 @@ describe("Admin passcode secret", () => {
   const ctx = { req: {} as TrpcContext["req"], res: {} as TrpcContext["res"], user: undefined } as TrpcContext;
 
   it("is configured server-side and is not read from a VITE client variable", () => {
-    expect(process.env.SSOP_ADMIN_PASSCODE).toBeTruthy();
+    expect(process.env.SSOP_ADMIN_PASSCODE).toBe("1234");
     expect(process.env.VITE_SSOP_ADMIN_PASSCODE).toBeUndefined();
   });
 
