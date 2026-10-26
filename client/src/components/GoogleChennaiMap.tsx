@@ -18,7 +18,9 @@ const sewerPoints: Array<[number, number, string, number, string]> = [
   [13.158, 80.2921, "MH-1148", 95, "Critical"],
 ];
 
-type Props = { onPointSelect?: (point: { id: string; fill: number; status: string }) => void };
+type Props = {
+  onPointSelect?: (point: { id: string; fill: number; status: string }) => void;
+};
 
 function markerColor(fill: number) {
   return fill >= 95 ? "#f25567" : fill >= 80 ? "#e9ad35" : "#25c9ad";
@@ -31,9 +33,12 @@ export default function GoogleChennaiMap({ onPointSelect }: Props) {
 
   useEffect(() => {
     if (!API_KEY || !containerRef.current) return;
-    const existing = document.querySelector<HTMLScriptElement>("script[data-google-maps]");
+    const existing = document.querySelector<HTMLScriptElement>(
+      "script[data-google-maps]"
+    );
     const load = () => {
-      if (!window.google?.maps || !containerRef.current || mapRef.current) return;
+      if (!window.google?.maps || !containerRef.current || mapRef.current)
+        return;
       const map = new window.google.maps.Map(containerRef.current, {
         center: CHENNAI_CENTER,
         zoom: 12,
@@ -49,7 +54,12 @@ export default function GoogleChennaiMap({ onPointSelect }: Props) {
           map,
           position: { lat, lng },
           title: `${id} · ${fill}% full`,
-          label: { text: String(fill), color: "#ffffff", fontSize: "10px", fontWeight: "700" },
+          label: {
+            text: String(fill),
+            color: "#ffffff",
+            fontSize: "10px",
+            fontWeight: "700",
+          },
           icon: {
             path: window.google.maps.SymbolPath.CIRCLE,
             fillColor: markerColor(fill),
@@ -59,7 +69,9 @@ export default function GoogleChennaiMap({ onPointSelect }: Props) {
             scale: 12,
           },
         });
-        marker.addListener("click", () => onPointSelect?.({ id, fill, status }));
+        marker.addListener("click", () =>
+          onPointSelect?.({ id, fill, status })
+        );
         markersRef.current.push(marker);
       });
     };
@@ -75,9 +87,24 @@ export default function GoogleChennaiMap({ onPointSelect }: Props) {
       script.addEventListener("load", load, { once: true });
       document.head.appendChild(script);
     }
-    return () => { markersRef.current.forEach((marker) => marker.setMap(null)); markersRef.current = []; mapRef.current = null; };
+    return () => {
+      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current = [];
+      mapRef.current = null;
+    };
   }, [onPointSelect]);
 
-  if (!API_KEY) return <div className="map-missing">Add <code>VITE_GOOGLE_MAPS_API_KEY</code> to load Google Maps.</div>;
-  return <div ref={containerRef} className="google-map" aria-label="Google Maps centered on Chennai" />;
+  if (!API_KEY)
+    return (
+      <div className="map-missing">
+        Add <code>VITE_GOOGLE_MAPS_API_KEY</code> to load Google Maps.
+      </div>
+    );
+  return (
+    <div
+      ref={containerRef}
+      className="google-map"
+      aria-label="Google Maps centered on Chennai"
+    />
+  );
 }

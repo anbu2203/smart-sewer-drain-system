@@ -1,57 +1,700 @@
-import { createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { trpc } from "@/lib/trpc";
-import { Activity, AlertTriangle, ArrowUpRight, BarChart3, BatteryCharging, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, CloudRain, Download, FileText, CircleDot, Gauge, History as HistoryIcon, Layers3, Menu, MessageCircle, Mic, MoreHorizontal, Paperclip, Plus, Radio, RefreshCw, Search, Send, Settings2, ShieldCheck, Signal, SlidersHorizontal, Sparkles, Truck, Upload, Users, Wifi, ExternalLink, X, Zap } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowUpRight,
+  BarChart3,
+  BatteryCharging,
+  Bell,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ClipboardList,
+  CloudRain,
+  Download,
+  FileText,
+  CircleDot,
+  Gauge,
+  History as HistoryIcon,
+  Layers3,
+  Menu,
+  MessageCircle,
+  Mic,
+  MoreHorizontal,
+  Paperclip,
+  Plus,
+  Radio,
+  RefreshCw,
+  Search,
+  Send,
+  Settings2,
+  ShieldCheck,
+  Signal,
+  SlidersHorizontal,
+  Sparkles,
+  Truck,
+  Upload,
+  Users,
+  Wifi,
+  ExternalLink,
+  X,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 import GoogleChennaiMap from "@/components/GoogleChennaiMap";
 
-type View = "Overview" | "Live Map" | "Alerts" | "Tickets" | "Crew Dispatch" | "Ticket History" | "Risk Analytics" | "Sensor Health" | "Citizen Reports" | "Settings" | "My Tasks" | "JARVIS";
+type View =
+  | "Overview"
+  | "Live Map"
+  | "Alerts"
+  | "Tickets"
+  | "Crew Dispatch"
+  | "Ticket History"
+  | "Risk Analytics"
+  | "Sensor Health"
+  | "Citizen Reports"
+  | "Settings"
+  | "My Tasks"
+  | "JARVIS";
 type Role = "Admin" | "Employee";
-const employeeCrews = ["Crew Alpha", "Crew Bravo", "Crew Charlie", "Crew Delta"] as const;
+const employeeCrews = [
+  "Crew Alpha",
+  "Crew Bravo",
+  "Crew Charlie",
+  "Crew Delta",
+] as const;
 type IconType = React.ComponentType<{ size?: number; className?: string }>;
 const menu = [
-  { label: "Command centre", items: [{ label: "Overview", icon: Gauge }, { label: "Live Map", icon: MapIcon }] },
-  { label: "Operations", items: [{ label: "Alerts", icon: Bell }, { label: "Tickets", icon: ClipboardList }, { label: "Ticket History", icon: HistoryIcon }] },
-  { label: "Intelligence", items: [{ label: "Risk Analytics", icon: BarChart3 }, { label: "Sensor Health", icon: Activity }, { label: "Citizen Reports", icon: Users }] },
-  { label: "Workspace", items: [{ label: "JARVIS", icon: Sparkles }, { label: "Settings", icon: Settings2 }] },
+  {
+    label: "Command centre",
+    items: [
+      { label: "Overview", icon: Gauge },
+      { label: "Live Map", icon: MapIcon },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { label: "Alerts", icon: Bell },
+      { label: "Tickets", icon: ClipboardList },
+      { label: "Ticket History", icon: HistoryIcon },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
+      { label: "Risk Analytics", icon: BarChart3 },
+      { label: "Sensor Health", icon: Activity },
+      { label: "Citizen Reports", icon: Users },
+    ],
+  },
+  {
+    label: "Workspace",
+    items: [
+      { label: "JARVIS", icon: Sparkles },
+      { label: "Settings", icon: Settings2 },
+    ],
+  },
 ];
 const points = [
-  ["MH-0427", 97, "Ward 05", "Crew Alpha", "East Canal Road", 13.1052, 80.2874], ["MH-0312", 88, "Ward 08", "Crew Delta", "Perambur High Rd", 13.0921, 80.2445], ["MH-0198", 74, "Ward 03", "Crew Bravo", "Madhavaram Link", 13.0678, 80.2834], ["MH-0534", 96, "Ward 11", "Crew Bravo", "Millers Junction", 13.1194, 80.2158], ["MH-0271", 82, "Ward 06", "Crew Charlie", "Purasawalkam", 13.0549, 80.2618], ["MH-0449", 61, "Ward 09", "Crew Delta", "Otteri Bridge", 13.0712, 80.2349], ["MH-0622", 91, "Ward 14", "Crew Charlie", "Koyambedu Market", 13.1148, 80.2645], ["MH-0710", 78, "Ward 07", "Crew Alpha", "Aminjikarai", 13.0836, 80.3057],
+  ["MH-0427", 97, "Ward 05", "Crew Alpha", "East Canal Road", 13.1052, 80.2874],
+  [
+    "MH-0312",
+    88,
+    "Ward 08",
+    "Crew Delta",
+    "Perambur High Rd",
+    13.0921,
+    80.2445,
+  ],
+  ["MH-0198", 74, "Ward 03", "Crew Bravo", "Madhavaram Link", 13.0678, 80.2834],
+  [
+    "MH-0534",
+    96,
+    "Ward 11",
+    "Crew Bravo",
+    "Millers Junction",
+    13.1194,
+    80.2158,
+  ],
+  ["MH-0271", 82, "Ward 06", "Crew Charlie", "Purasawalkam", 13.0549, 80.2618],
+  ["MH-0449", 61, "Ward 09", "Crew Delta", "Otteri Bridge", 13.0712, 80.2349],
+  [
+    "MH-0622",
+    91,
+    "Ward 14",
+    "Crew Charlie",
+    "Koyambedu Market",
+    13.1148,
+    80.2645,
+  ],
+  ["MH-0710", 78, "Ward 07", "Crew Alpha", "Aminjikarai", 13.0836, 80.3057],
 ] as const;
 const alerts = [
-  { id: "ALT-2984", manhole: "MH-0427", ward: "Ward 05", fill: 97, crew: "Crew Alpha", sla: "08:42", status: "In Progress", type: "Critical" }, { id: "ALT-2983", manhole: "MH-0534", ward: "Ward 11", fill: 96, crew: "Crew Bravo", sla: "03:18", status: "Open", type: "Critical" }, { id: "ALT-2982", manhole: "MH-0312", ward: "Ward 08", fill: 88, crew: "Crew Delta", sla: "14:51", status: "In Progress", type: "Pre-alert" }, { id: "ALT-2981", manhole: "MH-0622", ward: "Ward 14", fill: 91, crew: "Crew Charlie", sla: "22:07", status: "Open", type: "Pre-alert" },
+  {
+    id: "ALT-2984",
+    manhole: "MH-0427",
+    ward: "Ward 05",
+    fill: 97,
+    crew: "Crew Alpha",
+    sla: "08:42",
+    status: "In Progress",
+    type: "Critical",
+  },
+  {
+    id: "ALT-2983",
+    manhole: "MH-0534",
+    ward: "Ward 11",
+    fill: 96,
+    crew: "Crew Bravo",
+    sla: "03:18",
+    status: "Open",
+    type: "Critical",
+  },
+  {
+    id: "ALT-2982",
+    manhole: "MH-0312",
+    ward: "Ward 08",
+    fill: 88,
+    crew: "Crew Delta",
+    sla: "14:51",
+    status: "In Progress",
+    type: "Pre-alert",
+  },
+  {
+    id: "ALT-2981",
+    manhole: "MH-0622",
+    ward: "Ward 14",
+    fill: 91,
+    crew: "Crew Charlie",
+    sla: "22:07",
+    status: "Open",
+    type: "Pre-alert",
+  },
 ];
 const tickets = [
-  { id: "TKT-1098", manhole: "MH-0427", title: "Overflow risk — East Canal", status: "In Progress", crew: "Crew Alpha", deadline: "09:33" }, { id: "TKT-1097", manhole: "MH-0534", title: "Critical level — Millers Jct.", status: "Open", crew: "Crew Bravo", deadline: "09:28" }, { id: "TKT-1096", manhole: "MH-0312", title: "Rising level — Perambur", status: "In Progress", crew: "Crew Delta", deadline: "09:30" }, { id: "TKT-1095", manhole: "MH-0622", title: "Pre-alert review — Koyambedu", status: "Open", crew: "Crew Charlie", deadline: "09:37" },
+  {
+    id: "TKT-1098",
+    manhole: "MH-0427",
+    title: "Overflow risk — East Canal",
+    status: "In Progress",
+    crew: "Crew Alpha",
+    deadline: "09:33",
+  },
+  {
+    id: "TKT-1097",
+    manhole: "MH-0534",
+    title: "Critical level — Millers Jct.",
+    status: "Open",
+    crew: "Crew Bravo",
+    deadline: "09:28",
+  },
+  {
+    id: "TKT-1096",
+    manhole: "MH-0312",
+    title: "Rising level — Perambur",
+    status: "In Progress",
+    crew: "Crew Delta",
+    deadline: "09:30",
+  },
+  {
+    id: "TKT-1095",
+    manhole: "MH-0622",
+    title: "Pre-alert review — Koyambedu",
+    status: "Open",
+    crew: "Crew Charlie",
+    deadline: "09:37",
+  },
 ];
-type Ticket = typeof tickets[number];
-type HistoryEntry = { id: number; ticketId: string; manhole: string; title: string; status: string; crew: string; deadline: string; ward: string | null; fill: number | null; proofPhotos: string | null; details: string | null; approvedBy: string | null; approvedAt: Date }; type JarvisAssignmentLog = { id: number; ticketId: string; crewName: string; assignedAt: Date | string; assignedBy: string };
-const isAlertClosed = (alert: { manhole: string }, closedTicketIds: string[]) => { const related = tickets.find((ticket) => ticket.manhole === alert.manhole); return related ? closedTicketIds.includes(related.id) : false; };
-const crews = [{ name: "Crew Alpha", zone: "Ward 05 · East Canal", status: "En route", eta: "08 min" }, { name: "Crew Bravo", zone: "Ward 11 · Millers Junction", status: "Assigned", eta: "15 min" }, { name: "Crew Charlie", zone: "Ward 14 · Koyambedu", status: "Available", eta: "—" }, { name: "Crew Delta", zone: "Ward 08 · Perambur", status: "On site", eta: "—" }];
-const wards = [{ name: "Ward 05", risk: 92, action: "Pre-position crew", tone: "critical" }, { name: "Ward 11", risk: 84, action: "Inspect choke point", tone: "critical" }, { name: "Ward 08", risk: 71, action: "Monitor inflow", tone: "warning" }, { name: "Ward 14", risk: 58, action: "Review sensor trend", tone: "warning" }];
+type Ticket = (typeof tickets)[number];
+type HistoryEntry = {
+  id: number;
+  ticketId: string;
+  manhole: string;
+  title: string;
+  status: string;
+  crew: string;
+  deadline: string;
+  ward: string | null;
+  fill: number | null;
+  proofPhotos: string | null;
+  details: string | null;
+  approvedBy: string | null;
+  approvedAt: Date;
+};
+type JarvisAssignmentLog = {
+  id: number;
+  ticketId: string;
+  crewName: string;
+  assignedAt: Date | string;
+  assignedBy: string;
+};
+const isAlertClosed = (
+  alert: { manhole: string },
+  closedTicketIds: string[]
+) => {
+  const related = tickets.find(ticket => ticket.manhole === alert.manhole);
+  return related ? closedTicketIds.includes(related.id) : false;
+};
+const crews = [
+  {
+    name: "Crew Alpha",
+    zone: "Ward 05 · East Canal",
+    status: "En route",
+    eta: "08 min",
+  },
+  {
+    name: "Crew Bravo",
+    zone: "Ward 11 · Millers Junction",
+    status: "Assigned",
+    eta: "15 min",
+  },
+  {
+    name: "Crew Charlie",
+    zone: "Ward 14 · Koyambedu",
+    status: "Available",
+    eta: "—",
+  },
+  {
+    name: "Crew Delta",
+    zone: "Ward 08 · Perambur",
+    status: "On site",
+    eta: "—",
+  },
+];
+const wards = [
+  { name: "Ward 05", risk: 92, action: "Pre-position crew", tone: "critical" },
+  {
+    name: "Ward 11",
+    risk: 84,
+    action: "Inspect choke point",
+    tone: "critical",
+  },
+  { name: "Ward 08", risk: 71, action: "Monitor inflow", tone: "warning" },
+  { name: "Ward 14", risk: 58, action: "Review sensor trend", tone: "warning" },
+];
 
-function MapIcon(props: { size?: number; className?: string }) { return <svg width={props.size ?? 24} height={props.size ?? 24} className={props.className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z" /><path d="M9 3v15M15 6v15" /></svg>; }
-function toastAction(message: string) { toast(message, { duration: 2200 }); }
-function speakText(text: string) { if (!("speechSynthesis" in window)) return toastAction("Voice output is not supported in this browser"); window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(text)); }
-function SectionHead({ icon: Icon, title, description, action }: { icon: IconType; title: string; description: string; action?: React.ReactNode }) { return <div className="view-section-head"><div><div className="panel-title-row"><Icon size={17} className="panel-icon" /><h3>{title}</h3></div><p>{description}</p></div>{action}</div>; }
-function Kpi({ icon: Icon, tone, label, value, detail, delta, onClick }: { icon: IconType; tone: string; label: string; value: string; detail: string; delta: string; onClick: () => void }) { return <button className={`kpi-card ${tone}`} onClick={onClick}><div className="kpi-head"><span className={`kpi-icon ${tone}`}><Icon size={17} /></span><span>{label}</span><MoreHorizontal size={16} /></div><div className="kpi-value-row"><strong>{value}</strong><span className={`delta ${tone === "red" || delta.startsWith("+") ? "negative" : "positive"}`}>{delta}</span></div><div className="kpi-foot"><span>{detail}</span><span className={`mini-bars ${tone}`} aria-hidden="true">{[42,67,53,72,61,83,76,96].map((height, i) => <i key={i} style={{ height: `${height}%` }} />)}</span></div></button>; }
-
-function SensorDrawer({ point, onClose, onTicket }: { point: { id: string; fill: number; status: string; ward?: string; crew?: string; label?: string } | null; onClose: () => void; onTicket: () => void }) {
-  if (!point) return null;
-  const readings = [point.fill - 13, point.fill - 10, point.fill - 8, point.fill - 12, point.fill - 5, point.fill - 3, point.fill];
-  return <div className="drawer-backdrop" onClick={onClose}><aside className="sensor-drawer" onClick={(e) => e.stopPropagation()}><div className="drawer-header"><div><span className="map-side-label">REAL-TIME SENSOR DATA</span><h2>{point.id}</h2><p>{point.label ?? "Chennai drainage network"} · {point.ward ?? "North zone"}</p></div><button className="icon-button small" onClick={onClose}><X size={15} /></button></div><div className={`sensor-level ${point.fill >= 95 ? "critical" : point.fill >= 80 ? "warning" : "normal"}`}><strong>{point.fill}%</strong><span>{point.status} level</span><small>updated just now</small></div><div className="sensor-grid"><div><span>Trend</span><strong className="red-text">↗ Rising</strong></div><div><span>Ultrasonic</span><strong>1.42 m</strong></div><div><span>Battery</span><strong className="mint-text">86%</strong></div><div><span>Signal</span><strong>−71 dBm</strong></div></div><div className="drawer-chart-heading"><strong>Fill history</strong><span>Last 6 hours</span></div><div className="sensor-chart"><svg viewBox="0 0 330 130" preserveAspectRatio="none"><path className="grid-line" d="M0 20H330M0 65H330M0 110H330" /><path className="threshold-line" d="M0 28H330" /><path className="data-path" d={`M0 ${116 - readings[0]} C45 ${112 - readings[1]} 55 ${108 - readings[2]} 90 ${110 - readings[3]} S145 ${90 - readings[4]} 185 ${94 - readings[4]} S240 ${80 - readings[5]} 330 ${76 - readings[6]}`} /></svg><div><span>04:00</span><span>06:00</span><span>08:00</span><span>Now</span></div></div><div className="sensor-events"><div><span className="event-dot red" /><span><strong>Critical threshold crossed</strong><small>09:24:18 · automated alert</small></span></div><div><span className="event-dot amber" /><span><strong>Rainfall intensity increased</strong><small>09:12:04 · IMD nowcast</small></span></div><div><span className="event-dot mint" /><span><strong>Sensor heartbeat received</strong><small>09:26:10 · signal healthy</small></span></div></div><button className="button primary full" onClick={onTicket}>Open related ticket <ChevronRight size={14} /></button></aside></div>;
+function MapIcon(props: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={props.size ?? 24}
+      height={props.size ?? 24}
+      className={props.className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z" />
+      <path d="M9 3v15M15 6v15" />
+    </svg>
+  );
+}
+function toastAction(message: string) {
+  toast(message, { duration: 2200 });
+}
+function speakText(text: string) {
+  if (!("speechSynthesis" in window))
+    return toastAction("Voice output is not supported in this browser");
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
 }
 
-function TicketDrawer({ role, ticket, onClose, onToast, onDispatch, onRequestVerification, proofPhotos, onPhotosChange }: { role: Role; ticket: typeof tickets[number] | null; onClose: () => void; onToast: (message: string) => void; onDispatch: (crew: string, ticketId: string) => Promise<void> | void; onRequestVerification: (ticketId: string) => void; proofPhotos: string[]; onPhotosChange: (ticketId: string, photos: string[]) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null); const [photos, setPhotos] = useState<string[]>(proofPhotos); useEffect(() => { setPhotos(proofPhotos); }, [proofPhotos, ticket?.id]); const [update, setUpdate] = useState(""); const [sent, setSent] = useState(false); const [sending, setSending] = useState(false);
+function readStandbyPreference() {
+  try {
+    return window.localStorage.getItem("ssop.jarvis.standby") === "on";
+  } catch {
+    return false;
+  }
+}
+
+function writeStandbyPreference(enabled: boolean) {
+  try {
+    if (enabled) window.localStorage.setItem("ssop.jarvis.standby", "on");
+    else window.localStorage.removeItem("ssop.jarvis.standby");
+  } catch {
+    // Storage can be unavailable in private or embedded browsers.
+  }
+}
+
+function SectionHead({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon: IconType;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="view-section-head">
+      <div>
+        <div className="panel-title-row">
+          <Icon size={17} className="panel-icon" />
+          <h3>{title}</h3>
+        </div>
+        <p>{description}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+function Kpi({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  detail,
+  delta,
+  onClick,
+}: {
+  icon: IconType;
+  tone: string;
+  label: string;
+  value: string;
+  detail: string;
+  delta: string;
+  onClick: () => void;
+}) {
+  return (
+    <button className={`kpi-card ${tone}`} onClick={onClick}>
+      <div className="kpi-head">
+        <span className={`kpi-icon ${tone}`}>
+          <Icon size={17} />
+        </span>
+        <span>{label}</span>
+        <MoreHorizontal size={16} />
+      </div>
+      <div className="kpi-value-row">
+        <strong>{value}</strong>
+        <span
+          className={`delta ${tone === "red" || delta.startsWith("+") ? "negative" : "positive"}`}
+        >
+          {delta}
+        </span>
+      </div>
+      <div className="kpi-foot">
+        <span>{detail}</span>
+        <span className={`mini-bars ${tone}`} aria-hidden="true">
+          {[42, 67, 53, 72, 61, 83, 76, 96].map((height, i) => (
+            <i key={i} style={{ height: `${height}%` }} />
+          ))}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function SensorDrawer({
+  point,
+  onClose,
+  onTicket,
+}: {
+  point: {
+    id: string;
+    fill: number;
+    status: string;
+    ward?: string;
+    crew?: string;
+    label?: string;
+  } | null;
+  onClose: () => void;
+  onTicket: () => void;
+}) {
+  if (!point) return null;
+  const readings = [
+    point.fill - 13,
+    point.fill - 10,
+    point.fill - 8,
+    point.fill - 12,
+    point.fill - 5,
+    point.fill - 3,
+    point.fill,
+  ];
+  return (
+    <div className="drawer-backdrop" onClick={onClose}>
+      <aside className="sensor-drawer" onClick={e => e.stopPropagation()}>
+        <div className="drawer-header">
+          <div>
+            <span className="map-side-label">REAL-TIME SENSOR DATA</span>
+            <h2>{point.id}</h2>
+            <p>
+              {point.label ?? "Chennai drainage network"} ·{" "}
+              {point.ward ?? "North zone"}
+            </p>
+          </div>
+          <button className="icon-button small" onClick={onClose}>
+            <X size={15} />
+          </button>
+        </div>
+        <div
+          className={`sensor-level ${point.fill >= 95 ? "critical" : point.fill >= 80 ? "warning" : "normal"}`}
+        >
+          <strong>{point.fill}%</strong>
+          <span>{point.status} level</span>
+          <small>updated just now</small>
+        </div>
+        <div className="sensor-grid">
+          <div>
+            <span>Trend</span>
+            <strong className="red-text">↗ Rising</strong>
+          </div>
+          <div>
+            <span>Ultrasonic</span>
+            <strong>1.42 m</strong>
+          </div>
+          <div>
+            <span>Battery</span>
+            <strong className="mint-text">86%</strong>
+          </div>
+          <div>
+            <span>Signal</span>
+            <strong>−71 dBm</strong>
+          </div>
+        </div>
+        <div className="drawer-chart-heading">
+          <strong>Fill history</strong>
+          <span>Last 6 hours</span>
+        </div>
+        <div className="sensor-chart">
+          <svg viewBox="0 0 330 130" preserveAspectRatio="none">
+            <path className="grid-line" d="M0 20H330M0 65H330M0 110H330" />
+            <path className="threshold-line" d="M0 28H330" />
+            <path
+              className="data-path"
+              d={`M0 ${116 - readings[0]} C45 ${112 - readings[1]} 55 ${108 - readings[2]} 90 ${110 - readings[3]} S145 ${90 - readings[4]} 185 ${94 - readings[4]} S240 ${80 - readings[5]} 330 ${76 - readings[6]}`}
+            />
+          </svg>
+          <div>
+            <span>04:00</span>
+            <span>06:00</span>
+            <span>08:00</span>
+            <span>Now</span>
+          </div>
+        </div>
+        <div className="sensor-events">
+          <div>
+            <span className="event-dot red" />
+            <span>
+              <strong>Critical threshold crossed</strong>
+              <small>09:24:18 · automated alert</small>
+            </span>
+          </div>
+          <div>
+            <span className="event-dot amber" />
+            <span>
+              <strong>Rainfall intensity increased</strong>
+              <small>09:12:04 · IMD nowcast</small>
+            </span>
+          </div>
+          <div>
+            <span className="event-dot mint" />
+            <span>
+              <strong>Sensor heartbeat received</strong>
+              <small>09:26:10 · signal healthy</small>
+            </span>
+          </div>
+        </div>
+        <button className="button primary full" onClick={onTicket}>
+          Open related ticket <ChevronRight size={14} />
+        </button>
+      </aside>
+    </div>
+  );
+}
+
+function TicketDrawer({
+  role,
+  ticket,
+  onClose,
+  onToast,
+  onDispatch,
+  onRequestVerification,
+  proofPhotos,
+  onPhotosChange,
+}: {
+  role: Role;
+  ticket: (typeof tickets)[number] | null;
+  onClose: () => void;
+  onToast: (message: string) => void;
+  onDispatch: (crew: string, ticketId: string) => Promise<void> | void;
+  onRequestVerification: (ticketId: string) => void;
+  proofPhotos: string[];
+  onPhotosChange: (ticketId: string, photos: string[]) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [photos, setPhotos] = useState<string[]>(proofPhotos);
+  useEffect(() => {
+    setPhotos(proofPhotos);
+  }, [proofPhotos, ticket?.id]);
+  const [update, setUpdate] = useState("");
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
   if (!ticket) return null;
-  const addPhotos = (files: FileList | null) => { if (!files) return; const next = Array.from(files).map((file) => URL.createObjectURL(file)); const merged = [...photos, ...next]; setPhotos(merged); onPhotosChange(ticket.id, merged); onToast(`${next.length} proof-of-work photo${next.length > 1 ? "s" : ""} attached`); };
-  return <div className="drawer-backdrop" onClick={onClose}><aside className="ticket-drawer" onClick={(e) => e.stopPropagation()}><div className="drawer-header"><div><span className="map-side-label">TICKET DETAIL</span><h2>{ticket.id}</h2><p>{ticket.manhole} · {ticket.title}</p></div><button className="icon-button small" onClick={onClose}><X size={15} /></button></div><div className="ticket-drawer-meta"><span className={`status-badge ${ticket.status === "Open" ? "open" : "progress"}`}>{ticket.status}</span><span>Created 09:24 IST</span><span className="red-text">SLA {ticket.deadline} IST</span></div><div className="drawer-section"><div className="drawer-section-title"><strong>Crew updates</strong><span>Audit timeline</span></div><div className="timeline"><div><i className="mint" /><span><strong>Alert acknowledged</strong><small>09:25 · Control room operator</small></span></div><div><i className="cyan" /><span><strong>Crew Alpha is en route</strong><small>09:26 · ETA 08 minutes</small></span></div>{sent && <div><i className="purple" /><span><strong>Crew dispatch queued</strong><small>09:27 · Control room</small></span></div>}</div>{role === "Admin" && <div className="update-composer"><input value={update} onChange={(e) => setUpdate(e.target.value)} placeholder="Add a crew update…" /><button onClick={() => { if (!update.trim()) return onToast("Type an update first"); onToast("Crew update added to audit log"); setUpdate(""); }}><Send size={14} /></button></div>}</div><div className="drawer-section"><div className="drawer-section-title"><strong>Proof of work</strong><span>{photos.length} attached</span></div><div className="photo-grid">{photos.map((photo, i) => <img key={`${photo}-${i}`} src={photo} alt={`Proof of work ${i + 1}`} />)}<button className="photo-upload" onClick={() => inputRef.current?.click()}><Upload size={17} /><span>Add before/after photo</span></button></div><input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={(e) => addPhotos(e.target.files)} /><p className="helper-text"><Paperclip size={13} /> Images are previewed locally in this ticket.</p></div><div className="drawer-actions">{role === "Employee" && <button className="button primary" onClick={() => onRequestVerification(ticket.id)}>Submit proof for verification <Check size={14} /></button>}</div></aside></div>;
+  const addPhotos = (files: FileList | null) => {
+    if (!files) return;
+    const next = Array.from(files).map(file => URL.createObjectURL(file));
+    const merged = [...photos, ...next];
+    setPhotos(merged);
+    onPhotosChange(ticket.id, merged);
+    onToast(
+      `${next.length} proof-of-work photo${next.length > 1 ? "s" : ""} attached`
+    );
+  };
+  return (
+    <div className="drawer-backdrop" onClick={onClose}>
+      <aside className="ticket-drawer" onClick={e => e.stopPropagation()}>
+        <div className="drawer-header">
+          <div>
+            <span className="map-side-label">TICKET DETAIL</span>
+            <h2>{ticket.id}</h2>
+            <p>
+              {ticket.manhole} · {ticket.title}
+            </p>
+          </div>
+          <button className="icon-button small" onClick={onClose}>
+            <X size={15} />
+          </button>
+        </div>
+        <div className="ticket-drawer-meta">
+          <span
+            className={`status-badge ${ticket.status === "Open" ? "open" : "progress"}`}
+          >
+            {ticket.status}
+          </span>
+          <span>Created 09:24 IST</span>
+          <span className="red-text">SLA {ticket.deadline} IST</span>
+        </div>
+        <div className="drawer-section">
+          <div className="drawer-section-title">
+            <strong>Crew updates</strong>
+            <span>Audit timeline</span>
+          </div>
+          <div className="timeline">
+            <div>
+              <i className="mint" />
+              <span>
+                <strong>Alert acknowledged</strong>
+                <small>09:25 · Control room operator</small>
+              </span>
+            </div>
+            <div>
+              <i className="cyan" />
+              <span>
+                <strong>Crew Alpha is en route</strong>
+                <small>09:26 · ETA 08 minutes</small>
+              </span>
+            </div>
+            {sent && (
+              <div>
+                <i className="purple" />
+                <span>
+                  <strong>Crew dispatch queued</strong>
+                  <small>09:27 · Control room</small>
+                </span>
+              </div>
+            )}
+          </div>
+          {role === "Admin" && (
+            <div className="update-composer">
+              <input
+                value={update}
+                onChange={e => setUpdate(e.target.value)}
+                placeholder="Add a crew update…"
+              />
+              <button
+                onClick={() => {
+                  if (!update.trim()) return onToast("Type an update first");
+                  onToast("Crew update added to audit log");
+                  setUpdate("");
+                }}
+              >
+                <Send size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="drawer-section">
+          <div className="drawer-section-title">
+            <strong>Proof of work</strong>
+            <span>{photos.length} attached</span>
+          </div>
+          <div className="photo-grid">
+            {photos.map((photo, i) => (
+              <img
+                key={`${photo}-${i}`}
+                src={photo}
+                alt={`Proof of work ${i + 1}`}
+              />
+            ))}
+            <button
+              className="photo-upload"
+              onClick={() => inputRef.current?.click()}
+            >
+              <Upload size={17} />
+              <span>Add before/after photo</span>
+            </button>
+          </div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={e => addPhotos(e.target.files)}
+          />
+          <p className="helper-text">
+            <Paperclip size={13} /> Images are previewed locally in this ticket.
+          </p>
+        </div>
+        <div className="drawer-actions">
+          {role === "Employee" && (
+            <button
+              className="button primary"
+              onClick={() => onRequestVerification(ticket.id)}
+            >
+              Submit proof for verification <Check size={14} />
+            </button>
+          )}
+        </div>
+      </aside>
+    </div>
+  );
 }
 
 function buildPdf(lines: string[]) {
-  const esc = (value: string) => value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-  const text = (x: number, y: number, size: number, value: string, color = "0.12 0.20 0.22", font = "F1") => `${color} rg BT /${font} ${size} Tf ${x} ${y} Td (${esc(value)}) Tj ET`;
-  const rect = (x: number, y: number, w: number, h: number, color: string, stroke = false) => `${color} ${stroke ? "RG" : "rg"} ${x} ${y} ${w} ${h} re ${stroke ? "S" : "f"}`;
+  const esc = (value: string) =>
+    value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  const text = (
+    x: number,
+    y: number,
+    size: number,
+    value: string,
+    color = "0.12 0.20 0.22",
+    font = "F1"
+  ) => `${color} rg BT /${font} ${size} Tf ${x} ${y} Td (${esc(value)}) Tj ET`;
+  const rect = (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    color: string,
+    stroke = false
+  ) =>
+    `${color} ${stroke ? "RG" : "rg"} ${x} ${y} ${w} ${h} re ${stroke ? "S" : "f"}`;
   const manhole = lines[1]?.replace("Manhole: ", "") ?? "Unknown";
   const location = lines[2]?.replace("Location: ", "") ?? "Chennai network";
   const ward = lines[3]?.replace("Ward: ", "") ?? "—";
@@ -66,48 +709,2511 @@ function buildPdf(lines: string[]) {
     text(442, 744, 8, "02 SEP 2026 · 09:26 IST", "0.82 1 0.97"),
     text(42, 700, 24, "Manhole health report", "0.93 0.98 0.97", "F2"),
     text(42, 680, 11, `${manhole} · ${location}`, "0.63 0.78 0.77"),
-    text(42, 656, 9, `Operating area: ${ward}   |   Assigned: ${crew}`, "0.63 0.78 0.77"),
-    rect(42, 566, 126, 64, "0.12 0.16 0.18"), rect(178, 566, 126, 64, "0.12 0.16 0.18"), rect(314, 566, 126, 64, "0.12 0.16 0.18"), rect(450, 566, 120, 64, "0.12 0.16 0.18"),
-    text(56, 610, 8, "CURRENT FILL", "0.45 0.65 0.64"), text(56, 581, 24, fill, "1 0.37 0.44", "F2"),
-    text(192, 610, 8, "RISK STATUS", "0.45 0.65 0.64"), text(192, 581, 14, "CRITICAL", "1 0.74 0.29", "F2"),
-    text(328, 610, 8, "BATTERY", "0.45 0.65 0.64"), text(328, 581, 20, "86%", "0.30 0.90 0.72", "F2"),
-    text(464, 610, 8, "SIGNAL", "0.45 0.65 0.64"), text(464, 581, 17, "-71 dBm", "0.82 0.93 0.92", "F2"),
+    text(
+      42,
+      656,
+      9,
+      `Operating area: ${ward}   |   Assigned: ${crew}`,
+      "0.63 0.78 0.77"
+    ),
+    rect(42, 566, 126, 64, "0.12 0.16 0.18"),
+    rect(178, 566, 126, 64, "0.12 0.16 0.18"),
+    rect(314, 566, 126, 64, "0.12 0.16 0.18"),
+    rect(450, 566, 120, 64, "0.12 0.16 0.18"),
+    text(56, 610, 8, "CURRENT FILL", "0.45 0.65 0.64"),
+    text(56, 581, 24, fill, "1 0.37 0.44", "F2"),
+    text(192, 610, 8, "RISK STATUS", "0.45 0.65 0.64"),
+    text(192, 581, 14, "CRITICAL", "1 0.74 0.29", "F2"),
+    text(328, 610, 8, "BATTERY", "0.45 0.65 0.64"),
+    text(328, 581, 20, "86%", "0.30 0.90 0.72", "F2"),
+    text(464, 610, 8, "SIGNAL", "0.45 0.65 0.64"),
+    text(464, 581, 17, "-71 dBm", "0.82 0.93 0.92", "F2"),
     text(42, 528, 12, "Risk assessment", "0.93 0.98 0.97", "F2"),
-    text(42, 507, 9, "Fill level against automated intervention threshold", "0.55 0.70 0.69"),
-    rect(42, 480, 528, 14, "0.12 0.18 0.19"), rect(42, 480, 512, 14, "0.98 0.36 0.43"),
-    text(42, 458, 8, "0%", "0.55 0.70 0.69"), text(294, 458, 8, "50%", "0.55 0.70 0.69"), text(548, 458, 8, "100%", "0.55 0.70 0.69"),
+    text(
+      42,
+      507,
+      9,
+      "Fill level against automated intervention threshold",
+      "0.55 0.70 0.69"
+    ),
+    rect(42, 480, 528, 14, "0.12 0.18 0.19"),
+    rect(42, 480, 512, 14, "0.98 0.36 0.43"),
+    text(42, 458, 8, "0%", "0.55 0.70 0.69"),
+    text(294, 458, 8, "50%", "0.55 0.70 0.69"),
+    text(548, 458, 8, "100%", "0.55 0.70 0.69"),
     text(42, 420, 12, "Sensor telemetry", "0.93 0.98 0.97", "F2"),
-    text(42, 396, 9, "Ultrasonic depth", "0.55 0.70 0.69"), text(180, 396, 10, "1.42 m", "0.82 0.93 0.92", "F2"),
-    text(310, 396, 9, "Trend", "0.55 0.70 0.69"), text(382, 396, 10, "Rising", "1 0.37 0.44", "F2"),
-    text(42, 370, 9, "Last heartbeat", "0.55 0.70 0.69"), text(180, 370, 10, "09:26:10 IST", "0.82 0.93 0.92", "F2"),
-    text(310, 370, 9, "Network state", "0.55 0.70 0.69"), text(382, 370, 10, "Online", "0.30 0.90 0.72", "F2"),
+    text(42, 396, 9, "Ultrasonic depth", "0.55 0.70 0.69"),
+    text(180, 396, 10, "1.42 m", "0.82 0.93 0.92", "F2"),
+    text(310, 396, 9, "Trend", "0.55 0.70 0.69"),
+    text(382, 396, 10, "Rising", "1 0.37 0.44", "F2"),
+    text(42, 370, 9, "Last heartbeat", "0.55 0.70 0.69"),
+    text(180, 370, 10, "09:26:10 IST", "0.82 0.93 0.92", "F2"),
+    text(310, 370, 9, "Network state", "0.55 0.70 0.69"),
+    text(382, 370, 10, "Online", "0.30 0.90 0.72", "F2"),
     text(42, 312, 12, "Operational timeline", "0.93 0.98 0.97", "F2"),
     rect(48, 207, 3, 78, "0.30 0.90 0.72"),
-    text(70, 276, 10, "Critical threshold crossed", "0.93 0.98 0.97", "F2"), text(70, 260, 8, "09:24:18 · automated alert", "0.55 0.70 0.69"),
-    text(70, 232, 10, "Crew assignment active", "0.93 0.98 0.97", "F2"), text(70, 216, 8, `09:26:00 · ${crew}`, "0.55 0.70 0.69"),
-    text(70, 188, 10, "Recommended action", "0.93 0.98 0.97", "F2"), text(70, 172, 8, "Inspect inlet, clear obstruction, and attach proof of work.", "0.55 0.70 0.69"),
-    rect(42, 92, 528, 42, "0.08 0.14 0.16"), text(56, 116, 8, "REPORT NOTE", "0.30 0.90 0.72", "F2"), text(56, 101, 8, "Generated by SSOP control room · Review before closing the work order.", "0.63 0.78 0.77"),
+    text(70, 276, 10, "Critical threshold crossed", "0.93 0.98 0.97", "F2"),
+    text(70, 260, 8, "09:24:18 · automated alert", "0.55 0.70 0.69"),
+    text(70, 232, 10, "Crew assignment active", "0.93 0.98 0.97", "F2"),
+    text(70, 216, 8, `09:26:00 · ${crew}`, "0.55 0.70 0.69"),
+    text(70, 188, 10, "Recommended action", "0.93 0.98 0.97", "F2"),
+    text(
+      70,
+      172,
+      8,
+      "Inspect inlet, clear obstruction, and attach proof of work.",
+      "0.55 0.70 0.69"
+    ),
+    rect(42, 92, 528, 42, "0.08 0.14 0.16"),
+    text(56, 116, 8, "REPORT NOTE", "0.30 0.90 0.72", "F2"),
+    text(
+      56,
+      101,
+      8,
+      "Generated by SSOP control room · Review before closing the work order.",
+      "0.63 0.78 0.77"
+    ),
   ].join("\\n");
-  const objects = [`1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj`, `2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj`, `3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Resources<</Font<</F1 4 0 R/F2 6 0 R>>>>/Contents 5 0 R>>endobj`, `4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj`, `5 0 obj<</Length ${stream.length}>>stream\n${stream}\nendstream endobj`, `6 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold>>endobj`]; let pdf = "%PDF-1.4\n"; const offsets = [0]; objects.forEach((object) => { offsets.push(pdf.length); pdf += `${object}\n`; }); const xref = pdf.length; pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n `).join("\\n")}\ntrailer<</Size ${objects.length + 1}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF`; return pdf;
+  const objects = [
+    `1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj`,
+    `2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj`,
+    `3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Resources<</Font<</F1 4 0 R/F2 6 0 R>>>>/Contents 5 0 R>>endobj`,
+    `4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj`,
+    `5 0 obj<</Length ${stream.length}>>stream\n${stream}\nendstream endobj`,
+    `6 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold>>endobj`,
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach(object => {
+    offsets.push(pdf.length);
+    pdf += `${object}\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets
+    .slice(1)
+    .map(offset => `${String(offset).padStart(10, "0")} 00000 n `)
+    .join(
+      "\\n"
+    )}\ntrailer<</Size ${objects.length + 1}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF`;
+  return pdf;
 }
-function downloadReport(pointId: string, format: "pdf" | "csv") { const point = points.find((item) => item[0] === pointId) ?? points[0]; const lines = [`SSOP · Manhole report`, `Manhole: ${point[0]}`, `Location: ${point[4]}`, `Ward: ${point[2]}`, `Current fill: ${point[1]}%`, `Assigned crew: ${point[3]}`, `Report date: 02 Sep 2026`, `Alert history: Critical threshold crossed at 09:24 IST`, `Sensor status: Online · Battery 86% · Signal -71 dBm`]; const body = format === "csv" ? `field,value\n${lines.slice(1).map((line) => line.replace(": ", ",")).join("\n")}` : buildPdf(lines); const blob = new Blob([body], { type: format === "csv" ? "text/csv" : "application/pdf" }); const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `${point[0]}-ssop-report.${format}`; anchor.click(); URL.revokeObjectURL(url); toastAction(`${point[0]} ${format.toUpperCase()} report downloaded`); }
-function Overview({ navigate, openTicket, openSensor, sync, closedTicketIds, activeAlertsCount }: { navigate: (view: View) => void; openTicket: (id: string) => void; openSensor: (point: { id: string; fill: number; status: string; ward?: string; crew?: string; label?: string }) => void; sync: () => void; closedTicketIds: string[]; activeAlertsCount: number }) { const [lastSynced, setLastSynced] = useState(() => new Date()); useEffect(() => { const timer = window.setInterval(() => setLastSynced(new Date()), 1000); return () => window.clearInterval(timer); }, []); const syncNow = () => { setLastSynced(new Date()); sync(); }; const selectPoint = useCallback((point: { id: string; fill: number; status: string }) => { const data = points.find((item) => item[0] === point.id); openSensor({ ...point, ward: data?.[2], crew: data?.[3], label: data?.[4] }); }, [openSensor]); return <><section className="welcome-row"><div><div className="section-kicker"><span className="kicker-line" /> LIVE OPERATIONS · 02 SEP 2026</div><h2>Good morning, ANBU <span>↗</span></h2><p>Chennai’s network is being watched. <strong>7 alerts need attention.</strong></p></div><div className="intro-actions"><div className="synced-time"><span>Live time · Asia/Kolkata</span><strong>{lastSynced.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })} IST</strong></div><button className="button secondary" onClick={syncNow}><RefreshCw size={15} /> Sync now</button><button className="button primary" onClick={() => downloadReport("MH-0427", "pdf")}><Download size={15} /> Export report</button></div></section><section className="kpi-grid compact"><Kpi icon={AlertTriangle} tone="red" label="Critical now" value={String(activeAlertsCount)} detail="since 08:00 today" delta="+2" onClick={() => navigate("Alerts")} /><Kpi icon={Zap} tone="cyan" label="Avg. response" value="11m 42s" detail="vs. 7-day average" delta="-18%" onClick={() => navigate("Tickets")} /><Kpi icon={Wifi} tone="mint" label="Manholes online" value="1,248" detail="13 devices need review" delta="98.9%" onClick={() => navigate("Sensor Health")} /><Kpi icon={CloudRain} tone="amber" label="Flood risk · next 3h" value="14 wards" detail="rainfall nowcast 18 mm/h" delta="+3 rising" onClick={() => navigate("Risk Analytics")} /></section><section className="overview-grid"><div className="panel overview-map-panel"><SectionHead icon={MapIcon} title="Chennai network map" description="Native Google road map · sewer points overlay" action={<button className="text-button" onClick={() => navigate("Live Map")}>Open full map <ChevronRight size={14} /></button>} /><div className="google-map-wrap"><GoogleChennaiMap onPointSelect={selectPoint} /><div className="map-key"><span><i className="legend-dot green" /> &lt;80%</span><span><i className="legend-dot yellow" /> 80–94%</span><span><i className="legend-dot red" /> ≥95%</span></div></div></div><div className="panel overview-alert-panel"><SectionHead icon={Bell} title="Priority alerts" description="Critical events requiring a response" action={<button className="text-button" onClick={() => navigate("Alerts")}>View all <ChevronRight size={14} /></button>} /><div className="overview-alerts">{alerts.filter((alert) => !isAlertClosed(alert, closedTicketIds)).slice(0, 3).map((alert) => <button className="overview-alert" key={alert.id} onClick={() => openTicket(alert.id.replace("ALT", "TKT"))}><span className={`severity-dot ${alert.fill >= 95 ? "red" : "amber"}`} /><span><strong>{alert.manhole}</strong><small>{alert.ward} · {alert.crew}</small></span><b>{alert.fill}%</b><ChevronRight size={15} /></button>)}</div><div className="overview-callout"><Sparkles size={15} /><span><strong>Predictive action</strong> Pre-position Crew Alpha in Ward 05.</span><button onClick={() => navigate("JARVIS")}>Ask JARVIS</button></div></div></section><section className="overview-lower"><div className="panel compact-chart"><SectionHead icon={BarChart3} title="Ward performance" description="Average fill level · last 12 hours" action={<button className="text-button" onClick={() => navigate("Risk Analytics")}>Explore <ArrowUpRight size={14} /></button>} /><div className="chart-summary"><strong>72.4%</strong><span>↗ +8.2% vs yesterday</span></div><svg className="small-chart" viewBox="0 0 680 120" preserveAspectRatio="none"><path className="grid-line" d="M0 20H680M0 60H680M0 100H680" /><path className="threshold-line" d="M0 33H680" /><path className="area-path" d="M0 90 C70 84 88 78 140 82 S210 65 260 73 330 53 382 63 450 42 500 52 590 30 680 42 L680 105 L0 105Z" /><path className="data-path" d="M0 90 C70 84 88 78 140 82 S210 65 260 73 330 53 382 63 450 42 500 52 590 30 680 42" /></svg></div><div className="panel compact-sla"><SectionHead icon={ShieldCheck} title="SLA performance" description="Rolling 7-day response quality" action={<button className="text-button" onClick={() => navigate("Tickets")}>Details <ChevronRight size={14} /></button>} /><div className="compact-sla-score"><div><strong>92<span>%</span></strong><small>within SLA</small></div><span>Target &lt; 15 min<br /><b>Actual 11m 42s</b></span></div><div className="sla-progress"><i style={{ width: "92%" }} /></div></div></section></>; }
+function downloadReport(pointId: string, format: "pdf" | "csv") {
+  const point = points.find(item => item[0] === pointId) ?? points[0];
+  const lines = [
+    `SSOP · Manhole report`,
+    `Manhole: ${point[0]}`,
+    `Location: ${point[4]}`,
+    `Ward: ${point[2]}`,
+    `Current fill: ${point[1]}%`,
+    `Assigned crew: ${point[3]}`,
+    `Report date: 02 Sep 2026`,
+    `Alert history: Critical threshold crossed at 09:24 IST`,
+    `Sensor status: Online · Battery 86% · Signal -71 dBm`,
+  ];
+  const body =
+    format === "csv"
+      ? `field,value\n${lines
+          .slice(1)
+          .map(line => line.replace(": ", ","))
+          .join("\n")}`
+      : buildPdf(lines);
+  const blob = new Blob([body], {
+    type: format === "csv" ? "text/csv" : "application/pdf",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${point[0]}-ssop-report.${format}`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+  toastAction(`${point[0]} ${format.toUpperCase()} report downloaded`);
+}
+function Overview({
+  navigate,
+  openTicket,
+  openSensor,
+  sync,
+  closedTicketIds,
+  activeAlertsCount,
+}: {
+  navigate: (view: View) => void;
+  openTicket: (id: string) => void;
+  openSensor: (point: {
+    id: string;
+    fill: number;
+    status: string;
+    ward?: string;
+    crew?: string;
+    label?: string;
+  }) => void;
+  sync: () => void;
+  closedTicketIds: string[];
+  activeAlertsCount: number;
+}) {
+  const [lastSynced, setLastSynced] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setLastSynced(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const syncNow = () => {
+    setLastSynced(new Date());
+    sync();
+  };
+  const selectPoint = useCallback(
+    (point: { id: string; fill: number; status: string }) => {
+      const data = points.find(item => item[0] === point.id);
+      openSensor({
+        ...point,
+        ward: data?.[2],
+        crew: data?.[3],
+        label: data?.[4],
+      });
+    },
+    [openSensor]
+  );
+  return (
+    <>
+      <section className="welcome-row">
+        <div>
+          <div className="section-kicker">
+            <span className="kicker-line" /> LIVE OPERATIONS · 02 SEP 2026
+          </div>
+          <h2>
+            Good morning, ANBU <span>↗</span>
+          </h2>
+          <p>
+            Chennai’s network is being watched.{" "}
+            <strong>7 alerts need attention.</strong>
+          </p>
+        </div>
+        <div className="intro-actions">
+          <div className="synced-time">
+            <span>Live time · Asia/Kolkata</span>
+            <strong>
+              {lastSynced.toLocaleTimeString("en-IN", {
+                timeZone: "Asia/Kolkata",
+              })}{" "}
+              IST
+            </strong>
+          </div>
+          <button className="button secondary" onClick={syncNow}>
+            <RefreshCw size={15} /> Sync now
+          </button>
+          <button
+            className="button primary"
+            onClick={() => downloadReport("MH-0427", "pdf")}
+          >
+            <Download size={15} /> Export report
+          </button>
+        </div>
+      </section>
+      <section className="kpi-grid compact">
+        <Kpi
+          icon={AlertTriangle}
+          tone="red"
+          label="Critical now"
+          value={String(activeAlertsCount)}
+          detail="since 08:00 today"
+          delta="+2"
+          onClick={() => navigate("Alerts")}
+        />
+        <Kpi
+          icon={Zap}
+          tone="cyan"
+          label="Avg. response"
+          value="11m 42s"
+          detail="vs. 7-day average"
+          delta="-18%"
+          onClick={() => navigate("Tickets")}
+        />
+        <Kpi
+          icon={Wifi}
+          tone="mint"
+          label="Manholes online"
+          value="1,248"
+          detail="13 devices need review"
+          delta="98.9%"
+          onClick={() => navigate("Sensor Health")}
+        />
+        <Kpi
+          icon={CloudRain}
+          tone="amber"
+          label="Flood risk · next 3h"
+          value="14 wards"
+          detail="rainfall nowcast 18 mm/h"
+          delta="+3 rising"
+          onClick={() => navigate("Risk Analytics")}
+        />
+      </section>
+      <section className="overview-grid">
+        <div className="panel overview-map-panel">
+          <SectionHead
+            icon={MapIcon}
+            title="Chennai network map"
+            description="Native Google road map · sewer points overlay"
+            action={
+              <button
+                className="text-button"
+                onClick={() => navigate("Live Map")}
+              >
+                Open full map <ChevronRight size={14} />
+              </button>
+            }
+          />
+          <div className="google-map-wrap">
+            <GoogleChennaiMap onPointSelect={selectPoint} />
+            <div className="map-key">
+              <span>
+                <i className="legend-dot green" /> &lt;80%
+              </span>
+              <span>
+                <i className="legend-dot yellow" /> 80–94%
+              </span>
+              <span>
+                <i className="legend-dot red" /> ≥95%
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="panel overview-alert-panel">
+          <SectionHead
+            icon={Bell}
+            title="Priority alerts"
+            description="Critical events requiring a response"
+            action={
+              <button
+                className="text-button"
+                onClick={() => navigate("Alerts")}
+              >
+                View all <ChevronRight size={14} />
+              </button>
+            }
+          />
+          <div className="overview-alerts">
+            {alerts
+              .filter(alert => !isAlertClosed(alert, closedTicketIds))
+              .slice(0, 3)
+              .map(alert => (
+                <button
+                  className="overview-alert"
+                  key={alert.id}
+                  onClick={() => openTicket(alert.id.replace("ALT", "TKT"))}
+                >
+                  <span
+                    className={`severity-dot ${alert.fill >= 95 ? "red" : "amber"}`}
+                  />
+                  <span>
+                    <strong>{alert.manhole}</strong>
+                    <small>
+                      {alert.ward} · {alert.crew}
+                    </small>
+                  </span>
+                  <b>{alert.fill}%</b>
+                  <ChevronRight size={15} />
+                </button>
+              ))}
+          </div>
+          <div className="overview-callout">
+            <Sparkles size={15} />
+            <span>
+              <strong>Predictive action</strong> Pre-position Crew Alpha in Ward
+              05.
+            </span>
+            <button onClick={() => navigate("JARVIS")}>Ask JARVIS</button>
+          </div>
+        </div>
+      </section>
+      <section className="overview-lower">
+        <div className="panel compact-chart">
+          <SectionHead
+            icon={BarChart3}
+            title="Ward performance"
+            description="Average fill level · last 12 hours"
+            action={
+              <button
+                className="text-button"
+                onClick={() => navigate("Risk Analytics")}
+              >
+                Explore <ArrowUpRight size={14} />
+              </button>
+            }
+          />
+          <div className="chart-summary">
+            <strong>72.4%</strong>
+            <span>↗ +8.2% vs yesterday</span>
+          </div>
+          <svg
+            className="small-chart"
+            viewBox="0 0 680 120"
+            preserveAspectRatio="none"
+          >
+            <path className="grid-line" d="M0 20H680M0 60H680M0 100H680" />
+            <path className="threshold-line" d="M0 33H680" />
+            <path
+              className="area-path"
+              d="M0 90 C70 84 88 78 140 82 S210 65 260 73 330 53 382 63 450 42 500 52 590 30 680 42 L680 105 L0 105Z"
+            />
+            <path
+              className="data-path"
+              d="M0 90 C70 84 88 78 140 82 S210 65 260 73 330 53 382 63 450 42 500 52 590 30 680 42"
+            />
+          </svg>
+        </div>
+        <div className="panel compact-sla">
+          <SectionHead
+            icon={ShieldCheck}
+            title="SLA performance"
+            description="Rolling 7-day response quality"
+            action={
+              <button
+                className="text-button"
+                onClick={() => navigate("Tickets")}
+              >
+                Details <ChevronRight size={14} />
+              </button>
+            }
+          />
+          <div className="compact-sla-score">
+            <div>
+              <strong>
+                92<span>%</span>
+              </strong>
+              <small>within SLA</small>
+            </div>
+            <span>
+              Target &lt; 15 min
+              <br />
+              <b>Actual 11m 42s</b>
+            </span>
+          </div>
+          <div className="sla-progress">
+            <i style={{ width: "92%" }} />
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
 
-function AlertsView({ openTicket, closedTicketIds, verificationTicketIds, onApprove, proofPhotos }: { openTicket: (id: string) => void; closedTicketIds: string[]; verificationTicketIds: string[]; onApprove: (id: string) => void; proofPhotos: Record<string, string[]> }) { const [filter, setFilter] = useState("All"); const [ack, setAck] = useState<string[]>([]); const visible = alerts.filter((item) => !isAlertClosed(item, closedTicketIds) && (filter === "All" || (filter === "Critical" ? item.type === "Critical" : item.status === "Open"))); const verificationTickets = tickets.filter((item) => verificationTicketIds.includes(item.id)); return <section className="detail-view"><SectionHead icon={Bell} title="Alert feed" description="Triage, acknowledge, and escalate events from the sensor network" action={<div className="inline-actions"><button className="button secondary" onClick={() => setFilter("All")}>Reset filters</button><button className="button primary" onClick={() => downloadReport("MH-0427", "csv")}>Export feed <Download size={14} /></button></div>} /><div className="filter-toolbar"><div className="view-tabs">{["All", "Critical", "Open"].map((tab) => <button className={filter === tab ? "active" : ""} onClick={() => setFilter(tab)} key={tab}>{tab} alerts</button>)}</div><div className="selects"><label><SlidersHorizontal size={13} /><select><option>All wards</option><option>Ward 05</option><option>Ward 11</option></select></label></div></div><div className="verification-queue">{verificationTickets.map((ticket) => <div className="verification-item" key={ticket.id}><div><strong>Verification required · {ticket.id}</strong><small>{ticket.manhole} · {ticket.title} marked complete by field crew</small><div className="verification-photo-row">{(proofPhotos[ticket.id] ?? []).map((photo, index) => <img key={`${ticket.id}-${index}`} src={photo} alt={`Proof photo ${index + 1} for ${ticket.id}`} />)}{!(proofPhotos[ticket.id] ?? []).length && <span>Waiting for proof-of-work photo</span>}</div></div><button className="button tiny primary" disabled={!(proofPhotos[ticket.id] ?? []).length} title={!(proofPhotos[ticket.id] ?? []).length ? "Upload proof-of-work photo before approval" : "Approve and close ticket"} onClick={() => onApprove(ticket.id)}><CheckCircle2 size={13} /> Approve & close</button></div>)}</div><div className="detail-table">{visible.map((alert) => <div className="detail-row" key={alert.id}><span className={`severity-dot ${alert.fill >= 95 ? "red" : "amber"}`} /><button className="row-primary" onClick={() => openTicket(alert.id.replace("ALT", "TKT"))}><strong>{alert.manhole} · {alert.id}</strong><small>{alert.ward} · 02 Sep 2026, 09:24 · {alert.fill}% fill</small></button><span>{ack.includes(alert.id) ? "Acknowledged" : alert.status}</span><span className={alert.fill >= 95 ? "red-text" : "amber-text"}>{ack.includes(alert.id) ? "Paused" : `${alert.sla} SLA`}</span><button className="button tiny secondary" onClick={() => { setAck([...ack, alert.id]); toastAction(`${alert.id} acknowledged`); }}>{ack.includes(alert.id) ? <Check size={13} /> : <ShieldCheck size={13} />} {ack.includes(alert.id) ? "Done" : "Acknowledge"}</button><ChevronRight size={15} /></div>)}</div><div className="detail-footer-note"><CheckCircle2 size={15} /> 6 alerts resolved within SLA today · escalation engine active</div></section>; }
+function AlertsView({
+  openTicket,
+  closedTicketIds,
+  verificationTicketIds,
+  onApprove,
+  proofPhotos,
+}: {
+  openTicket: (id: string) => void;
+  closedTicketIds: string[];
+  verificationTicketIds: string[];
+  onApprove: (id: string) => void;
+  proofPhotos: Record<string, string[]>;
+}) {
+  const [filter, setFilter] = useState("All");
+  const [ack, setAck] = useState<string[]>([]);
+  const visible = alerts.filter(
+    item =>
+      !isAlertClosed(item, closedTicketIds) &&
+      (filter === "All" ||
+        (filter === "Critical"
+          ? item.type === "Critical"
+          : item.status === "Open"))
+  );
+  const verificationTickets = tickets.filter(item =>
+    verificationTicketIds.includes(item.id)
+  );
+  return (
+    <section className="detail-view">
+      <SectionHead
+        icon={Bell}
+        title="Alert feed"
+        description="Triage, acknowledge, and escalate events from the sensor network"
+        action={
+          <div className="inline-actions">
+            <button
+              className="button secondary"
+              onClick={() => setFilter("All")}
+            >
+              Reset filters
+            </button>
+            <button
+              className="button primary"
+              onClick={() => downloadReport("MH-0427", "csv")}
+            >
+              Export feed <Download size={14} />
+            </button>
+          </div>
+        }
+      />
+      <div className="filter-toolbar">
+        <div className="view-tabs">
+          {["All", "Critical", "Open"].map(tab => (
+            <button
+              className={filter === tab ? "active" : ""}
+              onClick={() => setFilter(tab)}
+              key={tab}
+            >
+              {tab} alerts
+            </button>
+          ))}
+        </div>
+        <div className="selects">
+          <label>
+            <SlidersHorizontal size={13} />
+            <select>
+              <option>All wards</option>
+              <option>Ward 05</option>
+              <option>Ward 11</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div className="verification-queue">
+        {verificationTickets.map(ticket => (
+          <div className="verification-item" key={ticket.id}>
+            <div>
+              <strong>Verification required · {ticket.id}</strong>
+              <small>
+                {ticket.manhole} · {ticket.title} marked complete by field crew
+              </small>
+              <div className="verification-photo-row">
+                {(proofPhotos[ticket.id] ?? []).map((photo, index) => (
+                  <img
+                    key={`${ticket.id}-${index}`}
+                    src={photo}
+                    alt={`Proof photo ${index + 1} for ${ticket.id}`}
+                  />
+                ))}
+                {!(proofPhotos[ticket.id] ?? []).length && (
+                  <span>Waiting for proof-of-work photo</span>
+                )}
+              </div>
+            </div>
+            <button
+              className="button tiny primary"
+              disabled={!(proofPhotos[ticket.id] ?? []).length}
+              title={
+                !(proofPhotos[ticket.id] ?? []).length
+                  ? "Upload proof-of-work photo before approval"
+                  : "Approve and close ticket"
+              }
+              onClick={() => onApprove(ticket.id)}
+            >
+              <CheckCircle2 size={13} /> Approve & close
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="detail-table">
+        {visible.map(alert => (
+          <div className="detail-row" key={alert.id}>
+            <span
+              className={`severity-dot ${alert.fill >= 95 ? "red" : "amber"}`}
+            />
+            <button
+              className="row-primary"
+              onClick={() => openTicket(alert.id.replace("ALT", "TKT"))}
+            >
+              <strong>
+                {alert.manhole} · {alert.id}
+              </strong>
+              <small>
+                {alert.ward} · 02 Sep 2026, 09:24 · {alert.fill}% fill
+              </small>
+            </button>
+            <span>
+              {ack.includes(alert.id) ? "Acknowledged" : alert.status}
+            </span>
+            <span className={alert.fill >= 95 ? "red-text" : "amber-text"}>
+              {ack.includes(alert.id) ? "Paused" : `${alert.sla} SLA`}
+            </span>
+            <button
+              className="button tiny secondary"
+              onClick={() => {
+                setAck([...ack, alert.id]);
+                toastAction(`${alert.id} acknowledged`);
+              }}
+            >
+              {ack.includes(alert.id) ? (
+                <Check size={13} />
+              ) : (
+                <ShieldCheck size={13} />
+              )}{" "}
+              {ack.includes(alert.id) ? "Done" : "Acknowledge"}
+            </button>
+            <ChevronRight size={15} />
+          </div>
+        ))}
+      </div>
+      <div className="detail-footer-note">
+        <CheckCircle2 size={15} /> 6 alerts resolved within SLA today ·
+        escalation engine active
+      </div>
+    </section>
+  );
+}
 
-function TicketsView({ openTicket, activeTickets }: { openTicket: (id: string) => void; activeTickets: Ticket[] }) { return <section className="detail-view"><SectionHead icon={ClipboardList} title="Ticket management" description="Every critical event becomes a trackable work order" action={<div className="inline-actions"><button className="button secondary" onClick={() => toastAction("Bulk assign mode enabled")}>Assign crew</button><button className="button primary" onClick={() => toastAction("New ticket form opened")}>New ticket <Plus size={14} /></button></div>} /><div className="ticket-summary"><div><span>Open tickets</span><strong>{activeTickets.filter((item) => item.status === "Open").length}</strong></div><div><span>In progress</span><strong className="cyan-text">{activeTickets.filter((item) => item.status === "In Progress").length}</strong></div><div><span>Due in 15 min</span><strong className="red-text">{activeTickets.filter((item) => item.deadline <= "09:30").length}</strong></div><div><span>Resolved today</span><strong className="mint-text">18</strong></div></div><div className="detail-table ticket-detail-table">{activeTickets.map((ticket) => <button className="detail-row" key={ticket.id} onClick={() => openTicket(ticket.id)}><span className={`ticket-dot ${ticket.status === "Open" ? "red" : "cyan"}`} /><span className="row-primary"><strong>{ticket.id} · {ticket.manhole}</strong><small>{ticket.title}</small></span><span className={`status-badge ${ticket.status === "Open" ? "open" : "progress"}`}>{ticket.status}</span><span>{ticket.crew}</span><span className={ticket.status === "Open" ? "red-text" : ""}>{ticket.deadline} IST</span><ChevronRight size={15} /></button>)}</div></section>; }
+function TicketsView({
+  openTicket,
+  activeTickets,
+}: {
+  openTicket: (id: string) => void;
+  activeTickets: Ticket[];
+}) {
+  return (
+    <section className="detail-view">
+      <SectionHead
+        icon={ClipboardList}
+        title="Ticket management"
+        description="Every critical event becomes a trackable work order"
+        action={
+          <div className="inline-actions">
+            <button
+              className="button secondary"
+              onClick={() => toastAction("Bulk assign mode enabled")}
+            >
+              Assign crew
+            </button>
+            <button
+              className="button primary"
+              onClick={() => toastAction("New ticket form opened")}
+            >
+              New ticket <Plus size={14} />
+            </button>
+          </div>
+        }
+      />
+      <div className="ticket-summary">
+        <div>
+          <span>Open tickets</span>
+          <strong>
+            {activeTickets.filter(item => item.status === "Open").length}
+          </strong>
+        </div>
+        <div>
+          <span>In progress</span>
+          <strong className="cyan-text">
+            {activeTickets.filter(item => item.status === "In Progress").length}
+          </strong>
+        </div>
+        <div>
+          <span>Due in 15 min</span>
+          <strong className="red-text">
+            {activeTickets.filter(item => item.deadline <= "09:30").length}
+          </strong>
+        </div>
+        <div>
+          <span>Resolved today</span>
+          <strong className="mint-text">18</strong>
+        </div>
+      </div>
+      <div className="detail-table ticket-detail-table">
+        {activeTickets.map(ticket => (
+          <button
+            className="detail-row"
+            key={ticket.id}
+            onClick={() => openTicket(ticket.id)}
+          >
+            <span
+              className={`ticket-dot ${ticket.status === "Open" ? "red" : "cyan"}`}
+            />
+            <span className="row-primary">
+              <strong>
+                {ticket.id} · {ticket.manhole}
+              </strong>
+              <small>{ticket.title}</small>
+            </span>
+            <span
+              className={`status-badge ${ticket.status === "Open" ? "open" : "progress"}`}
+            >
+              {ticket.status}
+            </span>
+            <span>{ticket.crew}</span>
+            <span className={ticket.status === "Open" ? "red-text" : ""}>
+              {ticket.deadline} IST
+            </span>
+            <ChevronRight size={15} />
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
 
-function HistoryDrawer({ entry, onClose }: { entry: HistoryEntry | null; onClose: () => void }) { if (!entry) return null; let photos: string[] = []; try { photos = entry.proofPhotos ? JSON.parse(entry.proofPhotos) : []; } catch { photos = []; } return <div className="drawer-backdrop" onClick={onClose}><aside className="ticket-drawer" onClick={(e) => e.stopPropagation()}><div className="drawer-header"><div><span className="map-side-label">ARCHIVED TICKET</span><h2>{entry.ticketId}</h2><p>{entry.manhole} · {entry.title}</p></div><button className="icon-button small" onClick={onClose}><X size={15} /></button></div><div className="ticket-drawer-meta"><span className="status-badge resolved">Approved</span><span>{entry.ward ?? "Chennai network"}</span><span className="mint-text">Closed {new Date(entry.approvedAt).toLocaleString()}</span></div><div className="drawer-section"><div className="drawer-section-title"><strong>Closure record</strong><span>Permanent history</span></div><div className="history-detail-grid"><div><span>Manhole</span><strong>{entry.manhole}</strong></div><div><span>Fill at closure</span><strong>{entry.fill ?? "—"}%</strong></div><div><span>Assigned crew</span><strong>{entry.crew}</strong></div><div><span>Original SLA</span><strong>{entry.deadline} IST</strong></div></div><p className="history-notes">{entry.details ?? "No additional closure notes recorded."}</p></div><div className="drawer-section"><div className="drawer-section-title"><strong>Proof of work</strong><span>{photos.length} attached</span></div><div className="photo-grid history-photo-grid">{photos.length ? photos.map((photo, i) => <img key={`${entry.ticketId}-${i}`} src={photo} alt={`Archived proof ${i + 1}`} />) : <span className="helper-text">No proof photos attached.</span>}</div></div><div className="drawer-section"><div className="drawer-section-title"><strong>Approval audit</strong><span>{entry.approvedBy ?? "SSOP operator"}</span></div><p className="history-notes">This work order was reviewed and approved from the notification queue. The record is retained for audit and reporting.</p></div></aside></div>; }
-function HistoryView({ entries, loading, onOpen }: { entries: HistoryEntry[]; loading: boolean; onOpen: (entry: HistoryEntry) => void }) { return <section className="detail-view"><SectionHead icon={HistoryIcon} title="Ticket history" description="Approved work orders retained with closure details and proof of work" action={<button className="button secondary" onClick={() => toastAction(`${entries.length} archived ticket${entries.length === 1 ? "" : "s"} loaded from database`)}><RefreshCw size={14} /> Refresh history</button>} />{loading ? <div className="empty-state">Loading archived tickets from the database…</div> : entries.length ? <div className="history-list">{entries.map((entry) => { let photoCount = 0; try { photoCount = entry.proofPhotos ? JSON.parse(entry.proofPhotos).length : 0; } catch {} return <button className="history-card" key={entry.id} onClick={() => onOpen(entry)}><div className="history-card-top"><span className="status-badge resolved">Approved</span><span>{new Date(entry.approvedAt).toLocaleString()}</span></div><div className="history-card-main"><div><strong>{entry.ticketId} · {entry.manhole}</strong><p>{entry.title}</p></div><ChevronRight size={16} /></div><div className="history-card-meta"><span>{entry.ward ?? "Chennai network"}</span><span>{entry.crew}</span><span>{entry.fill ?? "—"}% fill</span><span>{photoCount} proof photo{photoCount === 1 ? "" : "s"}</span></div></button>})}</div> : <div className="empty-state"><HistoryIcon size={18} /><strong>No approved tickets yet</strong><span>Approved work orders will appear here with their full audit trail.</span></div>}</section>; }
+function HistoryDrawer({
+  entry,
+  onClose,
+}: {
+  entry: HistoryEntry | null;
+  onClose: () => void;
+}) {
+  if (!entry) return null;
+  let photos: string[] = [];
+  try {
+    photos = entry.proofPhotos ? JSON.parse(entry.proofPhotos) : [];
+  } catch {
+    photos = [];
+  }
+  return (
+    <div className="drawer-backdrop" onClick={onClose}>
+      <aside className="ticket-drawer" onClick={e => e.stopPropagation()}>
+        <div className="drawer-header">
+          <div>
+            <span className="map-side-label">ARCHIVED TICKET</span>
+            <h2>{entry.ticketId}</h2>
+            <p>
+              {entry.manhole} · {entry.title}
+            </p>
+          </div>
+          <button className="icon-button small" onClick={onClose}>
+            <X size={15} />
+          </button>
+        </div>
+        <div className="ticket-drawer-meta">
+          <span className="status-badge resolved">Approved</span>
+          <span>{entry.ward ?? "Chennai network"}</span>
+          <span className="mint-text">
+            Closed {new Date(entry.approvedAt).toLocaleString()}
+          </span>
+        </div>
+        <div className="drawer-section">
+          <div className="drawer-section-title">
+            <strong>Closure record</strong>
+            <span>Permanent history</span>
+          </div>
+          <div className="history-detail-grid">
+            <div>
+              <span>Manhole</span>
+              <strong>{entry.manhole}</strong>
+            </div>
+            <div>
+              <span>Fill at closure</span>
+              <strong>{entry.fill ?? "—"}%</strong>
+            </div>
+            <div>
+              <span>Assigned crew</span>
+              <strong>{entry.crew}</strong>
+            </div>
+            <div>
+              <span>Original SLA</span>
+              <strong>{entry.deadline} IST</strong>
+            </div>
+          </div>
+          <p className="history-notes">
+            {entry.details ?? "No additional closure notes recorded."}
+          </p>
+        </div>
+        <div className="drawer-section">
+          <div className="drawer-section-title">
+            <strong>Proof of work</strong>
+            <span>{photos.length} attached</span>
+          </div>
+          <div className="photo-grid history-photo-grid">
+            {photos.length ? (
+              photos.map((photo, i) => (
+                <img
+                  key={`${entry.ticketId}-${i}`}
+                  src={photo}
+                  alt={`Archived proof ${i + 1}`}
+                />
+              ))
+            ) : (
+              <span className="helper-text">No proof photos attached.</span>
+            )}
+          </div>
+        </div>
+        <div className="drawer-section">
+          <div className="drawer-section-title">
+            <strong>Approval audit</strong>
+            <span>{entry.approvedBy ?? "SSOP operator"}</span>
+          </div>
+          <p className="history-notes">
+            This work order was reviewed and approved from the notification
+            queue. The record is retained for audit and reporting.
+          </p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+function HistoryView({
+  entries,
+  loading,
+  onOpen,
+}: {
+  entries: HistoryEntry[];
+  loading: boolean;
+  onOpen: (entry: HistoryEntry) => void;
+}) {
+  return (
+    <section className="detail-view">
+      <SectionHead
+        icon={HistoryIcon}
+        title="Ticket history"
+        description="Approved work orders retained with closure details and proof of work"
+        action={
+          <button
+            className="button secondary"
+            onClick={() =>
+              toastAction(
+                `${entries.length} archived ticket${entries.length === 1 ? "" : "s"} loaded from database`
+              )
+            }
+          >
+            <RefreshCw size={14} /> Refresh history
+          </button>
+        }
+      />
+      {loading ? (
+        <div className="empty-state">
+          Loading archived tickets from the database…
+        </div>
+      ) : entries.length ? (
+        <div className="history-list">
+          {entries.map(entry => {
+            let photoCount = 0;
+            try {
+              photoCount = entry.proofPhotos
+                ? JSON.parse(entry.proofPhotos).length
+                : 0;
+            } catch {}
+            return (
+              <button
+                className="history-card"
+                key={entry.id}
+                onClick={() => onOpen(entry)}
+              >
+                <div className="history-card-top">
+                  <span className="status-badge resolved">Approved</span>
+                  <span>{new Date(entry.approvedAt).toLocaleString()}</span>
+                </div>
+                <div className="history-card-main">
+                  <div>
+                    <strong>
+                      {entry.ticketId} · {entry.manhole}
+                    </strong>
+                    <p>{entry.title}</p>
+                  </div>
+                  <ChevronRight size={16} />
+                </div>
+                <div className="history-card-meta">
+                  <span>{entry.ward ?? "Chennai network"}</span>
+                  <span>{entry.crew}</span>
+                  <span>{entry.fill ?? "—"}% fill</span>
+                  <span>
+                    {photoCount} proof photo{photoCount === 1 ? "" : "s"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <HistoryIcon size={18} />
+          <strong>No approved tickets yet</strong>
+          <span>
+            Approved work orders will appear here with their full audit trail.
+          </span>
+        </div>
+      )}
+    </section>
+  );
+}
 
-function EmployeeTasksView({ activeTickets, openTicket, verificationCount, navigate, crewName, displayName }: { activeTickets: Ticket[]; openTicket: (id: string) => void; verificationCount: number; navigate: (view: View) => void; crewName: string; displayName: string }) { const tasks = activeTickets.filter((item) => item.crew === crewName); return <section className="detail-view"><SectionHead icon={ClipboardList} title="My assigned tasks" description="Employee workspace · upload proof and submit completed work for approval" action={<button className="button secondary" onClick={() => navigate("Alerts")}><Bell size={14} /> Notifications {verificationCount > 0 && <b>{verificationCount}</b>}</button>} /><div className="employee-banner"><div><span className="map-side-label">EMPLOYEE ACCESS</span><h2>{displayName} · {crewName}</h2><p>Command-centre controls are restricted. Open an assigned task to upload proof of work and request supervisor verification.</p></div><ShieldCheck size={28} /></div><div className="detail-table employee-task-list">{tasks.map((task) => <button className="detail-row" key={task.id} onClick={() => openTicket(task.id)}><span className="severity-dot red" /><span className="row-primary"><strong>{task.id} · {task.manhole}</strong><small>{task.title} · Due {task.deadline} IST</small></span><span>{task.status}</span><ChevronRight size={15} /></button>)}{!tasks.length && <div className="empty-state"><CheckCircle2 size={18} /><strong>No assigned tasks</strong><span>New field tasks will appear here.</span></div>}</div></section>; }
+function EmployeeTasksView({
+  activeTickets,
+  openTicket,
+  verificationCount,
+  navigate,
+  crewName,
+  displayName,
+}: {
+  activeTickets: Ticket[];
+  openTicket: (id: string) => void;
+  verificationCount: number;
+  navigate: (view: View) => void;
+  crewName: string;
+  displayName: string;
+}) {
+  const tasks = activeTickets.filter(item => item.crew === crewName);
+  return (
+    <section className="detail-view">
+      <SectionHead
+        icon={ClipboardList}
+        title="My assigned tasks"
+        description="Employee workspace · upload proof and submit completed work for approval"
+        action={
+          <button
+            className="button secondary"
+            onClick={() => navigate("Alerts")}
+          >
+            <Bell size={14} /> Notifications{" "}
+            {verificationCount > 0 && <b>{verificationCount}</b>}
+          </button>
+        }
+      />
+      <div className="employee-banner">
+        <div>
+          <span className="map-side-label">EMPLOYEE ACCESS</span>
+          <h2>
+            {displayName} · {crewName}
+          </h2>
+          <p>
+            Command-centre controls are restricted. Open an assigned task to
+            upload proof of work and request supervisor verification.
+          </p>
+        </div>
+        <ShieldCheck size={28} />
+      </div>
+      <div className="detail-table employee-task-list">
+        {tasks.map(task => (
+          <button
+            className="detail-row"
+            key={task.id}
+            onClick={() => openTicket(task.id)}
+          >
+            <span className="severity-dot red" />
+            <span className="row-primary">
+              <strong>
+                {task.id} · {task.manhole}
+              </strong>
+              <small>
+                {task.title} · Due {task.deadline} IST
+              </small>
+            </span>
+            <span>{task.status}</span>
+            <ChevronRight size={15} />
+          </button>
+        ))}
+        {!tasks.length && (
+          <div className="empty-state">
+            <CheckCircle2 size={18} />
+            <strong>No assigned tasks</strong>
+            <span>New field tasks will appear here.</span>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
-function EmployeeNotificationsView({ verificationTicketIds, proofPhotos }: { verificationTicketIds: string[]; proofPhotos: Record<string, string[]> }) { const pending = tickets.filter((item) => verificationTicketIds.includes(item.id)); return <section className="detail-view"><SectionHead icon={Bell} title="My notifications" description="Task updates and supervisor verification status" />{pending.length ? <div className="employee-notifications">{pending.map((item) => <div className="employee-notification" key={item.id}><div><span className="map-side-label">VERIFICATION PENDING</span><strong>{item.id} · {item.manhole}</strong><p>{item.title} · Supervisor review is pending</p></div><div className="notification-proof"><span>{(proofPhotos[item.id] ?? []).length} proof photo{(proofPhotos[item.id] ?? []).length === 1 ? "" : "s"} attached</span><span className="amber-text">Awaiting approval</span></div></div>)}</div> : <div className="empty-state"><Bell size={18} /><strong>No new notifications</strong><span>When a supervisor requests more information or reviews your proof, updates will appear here.</span></div>}</section>; }
+function EmployeeNotificationsView({
+  verificationTicketIds,
+  proofPhotos,
+}: {
+  verificationTicketIds: string[];
+  proofPhotos: Record<string, string[]>;
+}) {
+  const pending = tickets.filter(item =>
+    verificationTicketIds.includes(item.id)
+  );
+  return (
+    <section className="detail-view">
+      <SectionHead
+        icon={Bell}
+        title="My notifications"
+        description="Task updates and supervisor verification status"
+      />
+      {pending.length ? (
+        <div className="employee-notifications">
+          {pending.map(item => (
+            <div className="employee-notification" key={item.id}>
+              <div>
+                <span className="map-side-label">VERIFICATION PENDING</span>
+                <strong>
+                  {item.id} · {item.manhole}
+                </strong>
+                <p>{item.title} · Supervisor review is pending</p>
+              </div>
+              <div className="notification-proof">
+                <span>
+                  {(proofPhotos[item.id] ?? []).length} proof photo
+                  {(proofPhotos[item.id] ?? []).length === 1 ? "" : "s"}{" "}
+                  attached
+                </span>
+                <span className="amber-text">Awaiting approval</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <Bell size={18} />
+          <strong>No new notifications</strong>
+          <span>
+            When a supervisor requests more information or reviews your proof,
+            updates will appear here.
+          </span>
+        </div>
+      )}
+    </section>
+  );
+}
 
-function LoginScreen({ onLogin, onAdminAuth }: { onLogin: (role: Role, crew: string) => void; onAdminAuth: (password: string) => Promise<boolean> }) { const [mode, setMode] = useState<Role>("Employee"); const [crew, setCrew] = useState("Crew Alpha"); const [password, setPassword] = useState(""); const [checking, setChecking] = useState(false); const submit = async () => { if (mode === "Admin") { setChecking(true); const valid = await onAdminAuth(password); setChecking(false); if (!valid) { toastAction("Admin access denied"); return; } } speakText("Greetings, Anbu. Welcome to SSOP."); onLogin(mode, crew); }; return <div className="login-screen"><div className="login-card"><div className="brand-lockup"><div className="brand-mark"><span /><span /><span /></div><div><div className="brand-name">SSOP</div><div className="brand-subtitle">Smart Sewer Operations</div></div></div><span className="map-side-label">SECURE OPERATIONS ACCESS</span><h1>Sign in to SSOP</h1><p>Choose your workspace to continue.</p><div className="login-tabs"><button className={mode === "Employee" ? "active" : ""} onClick={() => setMode("Employee")}>Employee</button><button className={mode === "Admin" ? "active" : ""} onClick={() => setMode("Admin")}>Admin</button></div>{mode === "Employee" ? <label className="login-field">Crew profile<select value={crew} onChange={(e) => setCrew(e.target.value)}>{employeeCrews.map((item) => <option key={item}>{item}</option>)}</select></label> : <label className="login-field">Admin password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" autoComplete="current-password" /></label>}<button className="button primary full" onClick={() => void submit()} disabled={checking}>{checking ? "Verifying…" : "Enter workspace"} <ChevronRight size={15} /></button><div className="login-voice"><VoiceUpdate text="Welcome to SSOP. Choose Admin for command centre controls or an Employee crew profile to view assigned tasks and submit proof." /></div><small className="login-note">Employee access is limited to assigned tasks and proof submission.</small></div></div>; }
-function VoiceUpdate({ text }: { text: string }) { const [auto, setAuto] = useState(false); const speak = () => { if (!("speechSynthesis" in window)) return toastAction("Voice updates are not supported in this browser"); window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(text)); }; useEffect(() => { if (auto) speak(); }, [auto, text]); return <button className={`voice-control ${auto ? "active" : ""}`} onClick={() => setAuto((value) => !value)}><Radio size={14} /> {auto ? "Voice on" : "Read updates"}</button>; }
+function LoginScreen({
+  onLogin,
+  onAdminAuth,
+}: {
+  onLogin: (role: Role, crew: string) => void;
+  onAdminAuth: (password: string) => Promise<boolean>;
+}) {
+  const [mode, setMode] = useState<Role>("Employee");
+  const [crew, setCrew] = useState("Crew Alpha");
+  const [password, setPassword] = useState("");
+  const [checking, setChecking] = useState(false);
+  const submit = async () => {
+    if (mode === "Admin") {
+      setChecking(true);
+      const valid = await onAdminAuth(password);
+      setChecking(false);
+      if (!valid) {
+        toastAction("Admin access denied");
+        return;
+      }
+    }
+    speakText("Greetings, Anbu. Welcome to SSOP.");
+    onLogin(mode, crew);
+  };
+  return (
+    <div className="login-screen">
+      <div className="login-card">
+        <div className="brand-lockup">
+          <div className="brand-mark">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div>
+            <div className="brand-name">SSOP</div>
+            <div className="brand-subtitle">Smart Sewer Operations</div>
+          </div>
+        </div>
+        <span className="map-side-label">SECURE OPERATIONS ACCESS</span>
+        <h1>Sign in to SSOP</h1>
+        <p>Choose your workspace to continue.</p>
+        <div className="login-tabs">
+          <button
+            className={mode === "Employee" ? "active" : ""}
+            onClick={() => setMode("Employee")}
+          >
+            Employee
+          </button>
+          <button
+            className={mode === "Admin" ? "active" : ""}
+            onClick={() => setMode("Admin")}
+          >
+            Admin
+          </button>
+        </div>
+        {mode === "Employee" ? (
+          <label className="login-field">
+            Crew profile
+            <select value={crew} onChange={e => setCrew(e.target.value)}>
+              {employeeCrews.map(item => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <label className="login-field">
+            Admin password
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Enter password"
+              autoComplete="current-password"
+            />
+          </label>
+        )}
+        <button
+          className="button primary full"
+          onClick={() => void submit()}
+          disabled={checking}
+        >
+          {checking ? "Verifying…" : "Enter workspace"}{" "}
+          <ChevronRight size={15} />
+        </button>
+        <div className="login-voice">
+          <VoiceUpdate text="Welcome to SSOP. Choose Admin for command centre controls or an Employee crew profile to view assigned tasks and submit proof." />
+        </div>
+        <small className="login-note">
+          Employee access is limited to assigned tasks and proof submission.
+        </small>
+      </div>
+    </div>
+  );
+}
+function VoiceUpdate({ text }: { text: string }) {
+  const [auto, setAuto] = useState(false);
+  const speak = () => {
+    if (!("speechSynthesis" in window))
+      return toastAction("Voice updates are not supported in this browser");
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  };
+  useEffect(() => {
+    if (auto) speak();
+  }, [auto, text]);
+  return (
+    <button
+      className={`voice-control ${auto ? "active" : ""}`}
+      onClick={() => setAuto(value => !value)}
+    >
+      <Radio size={14} /> {auto ? "Voice on" : "Read updates"}
+    </button>
+  );
+}
 
-function JarvisView({ role, crewName, activeTickets, activeAlertsCount, assignmentLogs, onVoiceCommand }: { role: Role; crewName: string; activeTickets: Ticket[]; activeAlertsCount: number; assignmentLogs: JarvisAssignmentLog[]; onVoiceCommand: (command: string) => void }) { const [question, setQuestion] = useState(""); const [answer, setAnswer] = useState("I can explain SSOP workflows, roles, tickets, sensor alerts, proof review, and reports."); const [provider, setProvider] = useState("SSOP secure assistant"); const [now, setNow] = useState(() => new Date()); const [liveMode, setLiveMode] = useState(false); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false); const [pendingCommand, setPendingCommand] = useState(""); const [standby, setStandby] = useState(() => window.localStorage.getItem("ssop.jarvis.standby") === "on"); const liveModeRef = useRef(false); const recognitionRef = useRef<any>(null); const standbyRecognitionRef = useRef<any>(null); const standbyRef = useRef(standby); const lastAlertCountRef = useRef(activeAlertsCount); useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 1000); return () => window.clearInterval(timer); }, []); useEffect(() => { liveModeRef.current = liveMode; }, [liveMode]); const sayResponse = (text: string) => { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); setSpeaking(true); const utterance = new SpeechSynthesisUtterance(text); utterance.onend = () => setSpeaking(false); utterance.onerror = () => setSpeaking(false); window.speechSynthesis.speak(utterance); }; const ask = trpc.jarvis.ask.useMutation({ onSuccess: (result) => { setAnswer(result.answer); setProvider(result.provider); if (liveModeRef.current) { sayResponse(result.answer); setLiveMode(false); } }, onError: () => { setAnswer("JARVIS is temporarily unavailable. Check the server connection and try again."); setProvider("Unavailable"); } }); const beginStandbyRecognition = () => { const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition; if (!SpeechRecognition || !standbyRef.current) return; standbyRecognitionRef.current?.stop(); const recognition = new SpeechRecognition(); recognition.lang = "en-IN"; recognition.continuous = true; recognition.interimResults = false; recognition.onstart = () => setListening(true); recognition.onresult = (event: any) => { const transcript = event.results[event.results.length - 1][0].transcript as string; const wakeIndex = transcript.toLowerCase().indexOf("jarvis"); if (wakeIndex < 0) return; const request = transcript.slice(wakeIndex + "jarvis".length).replace(/^[\s,:-]+/, "").trim(); if (!request) { sayResponse("Yes, Anbu. I’m listening."); return; } setQuestion(request); const command = request.match(/\b(assign|reassign|move|mark|update|set)\b.*\b(TKT[- ]?\d+)\b.*\b(Crew (?:Alpha|Bravo|Charlie|Delta)|open|in progress|resolved|closed)\b/i); if (role === "Admin" && command) { setPendingCommand(request); sayResponse(`I heard: ${request}. Please confirm on screen.`); } else submit(request); }; recognition.onerror = (event: any) => { if (event.error === "not-allowed" || event.error === "service-not-allowed") { standbyRef.current = false; window.localStorage.removeItem("ssop.jarvis.standby"); setStandby(false); setListening(false); toastAction("Microphone permission is required for JARVIS standby"); } }; recognition.onend = () => { setListening(false); if (standbyRef.current) window.setTimeout(() => beginStandbyRecognition(), 300); }; standbyRecognitionRef.current = recognition; recognition.start(); }; useEffect(() => { standbyRef.current = standby; window.localStorage.setItem("ssop.jarvis.standby", standby ? "on" : "off"); if (standby) { const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition; if (!SpeechRecognition) { setStandby(false); toastAction("Standby listening is not supported in this browser"); return; } beginStandbyRecognition(); } else { standbyRecognitionRef.current?.stop(); setListening(false); } return () => standbyRecognitionRef.current?.stop(); }, [standby]); useEffect(() => { if (!standby || role !== "Admin") { lastAlertCountRef.current = activeAlertsCount; return; } if (activeAlertsCount > lastAlertCountRef.current) { const message = `Anbu, I detected ${activeAlertsCount - lastAlertCountRef.current} new operational alert${activeAlertsCount - lastAlertCountRef.current === 1 ? "" : "s"}. I’m ready to review the affected tickets with you.`; setAnswer(message); setProvider("JARVIS autonomous monitor"); sayResponse(message); } lastAlertCountRef.current = activeAlertsCount; }, [activeAlertsCount, role, standby]); const toggleStandby = () => { if (standby) { setStandby(false); sayResponse("JARVIS standby is now disabled."); } else { setStandby(true); sayResponse("Standby enabled. Say JARVIS when you need me, Anbu."); } }; const submit = (value = question) => { if (!value.trim()) return; ask.mutate({ question: value, context: `Current time in Asia/Kolkata: ${now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}; Role: ${role}; Employee crew: ${crewName}; Active alerts: ${activeAlertsCount}; Live tickets: ${activeTickets.slice(0, 8).map((item) => `${item.id} ${item.status} ${item.crew} deadline ${item.deadline}`).join(" | ")}` }); }; const toggleLiveConversation = () => { if (standby) return toastAction("JARVIS is on standby. Say JARVIS to call me."); if (listening) { recognitionRef.current?.stop(); setListening(false); setLiveMode(false); return; } const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition; if (!SpeechRecognition) return toastAction("Live voice conversation is not supported in this browser"); const recognition = new SpeechRecognition(); recognition.lang = "en-IN"; recognition.continuous = false; recognition.interimResults = false; recognition.onstart = () => { setLiveMode(true); setListening(true); }; recognition.onresult = (event: any) => { const transcript = event.results[0][0].transcript as string; setQuestion(transcript); const command = transcript.match(/\b(assign|reassign|move|mark|update|set)\b.*\b(TKT[- ]?\d+)\b.*\b(Crew (?:Alpha|Bravo|Charlie|Delta)|open|in progress|resolved|closed)\b/i); if (role === "Admin" && command) { setPendingCommand(transcript); speakText(`I heard: ${transcript}. Please confirm on screen.`); } else { submit(transcript); } }; recognition.onerror = () => { setListening(false); setLiveMode(false); toastAction("Microphone input could not be read"); }; recognition.onend = () => setListening(false); recognitionRef.current = recognition; recognition.start(); }; return <section className="detail-view"><SectionHead icon={Sparkles} title="JARVIS" description="ChatGPT-powered SSOP assistant · say JARVIS to call me when standby is enabled" /><div className={`jarvis-shell ${listening ? "is-listening" : speaking ? "is-speaking" : ""}`}><div className="jarvis-orb"><Sparkles size={26} /><div className="jarvis-waveform" aria-label={listening ? "JARVIS is listening" : speaking ? "JARVIS is speaking" : "JARVIS is ready"}>{[1,2,3,4,5,6,7].map((bar) => <i key={bar} />)}</div></div><div className="jarvis-copy"><span className="map-side-label">AI SYSTEM GUIDE · {provider}</span><small className="jarvis-live-clock">Live context synced · {now.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })} IST</small><h2>{listening ? (standby ? "Listening for “JARVIS”…" : "Listening for you, Anbu…") : speaking ? "Speaking to you, Anbu…" : standby ? "On standby for you, Anbu" : "Hello, I’m JARVIS"}</h2><p>{answer}</p></div><div className="jarvis-input"><input value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Ask JARVIS about SSOP…" /><button className="button primary" onClick={() => submit()} disabled={ask.isPending}>{ask.isPending ? "Thinking…" : "Ask"}</button><button className={`button ${listening ? "danger" : "secondary"}`} onClick={toggleLiveConversation}><Mic size={14} /> {listening ? "Stop" : "Live conversation"}</button><button className={`button ${standby ? "primary" : "secondary"}`} onClick={toggleStandby}><Radio size={14} /> {standby ? "Standby listening" : "Enable standby"}</button></div><div className="jarvis-command-note">{pendingCommand ? <><strong>Confirm voice command</strong><span>{pendingCommand}</span><div><button className="button primary" onClick={() => { onVoiceCommand(pendingCommand); setPendingCommand(""); }}>Confirm command</button><button className="button secondary" onClick={() => setPendingCommand("")}>Cancel</button></div></> : <span>{standby ? "Standby is active. Say “JARVIS” followed by a question or Admin command. Ticket commands still require confirmation." : "Enable standby to let JARVIS listen for the wake word. Admin ticket commands still require confirmation."}</span>}</div><div className="jarvis-suggestions"><button onClick={() => { setQuestion("Explain the SSOP ticket lifecycle"); }}>Ticket lifecycle</button><button onClick={() => { setQuestion("What can an employee do?"); }}>Employee access</button><button onClick={() => { setQuestion("How should I respond to a critical sensor?"); }}>Critical sensor</button></div><div className="jarvis-activity"><div className="jarvis-activity-head"><div><span className="map-side-label">AUTONOMOUS ACTIVITY</span><h3>Assignment log</h3></div><span className="activity-live"><span className="live-dot" /> Live</span></div>{assignmentLogs.length ? <div className="jarvis-activity-list">{assignmentLogs.slice(0, 8).map((entry) => <div className="jarvis-activity-item" key={entry.id}><span className="activity-node"><Check size={12} /></span><div><strong>I did assigned {entry.ticketId} to {entry.crewName}</strong><small>{new Date(entry.assignedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST · {entry.assignedBy}</small></div></div>)}</div> : <div className="jarvis-activity-empty"><Radio size={14} /> No autonomous assignments yet.</div>}</div></div></section>; }
+function JarvisView({
+  role,
+  crewName,
+  activeTickets,
+  activeAlertsCount,
+  assignmentLogs,
+  onVoiceCommand,
+}: {
+  role: Role;
+  crewName: string;
+  activeTickets: Ticket[];
+  activeAlertsCount: number;
+  assignmentLogs: JarvisAssignmentLog[];
+  onVoiceCommand: (command: string) => void;
+}) {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState(
+    "I can explain SSOP workflows, roles, tickets, sensor alerts, proof review, and reports."
+  );
+  const [provider, setProvider] = useState("SSOP secure assistant");
+  const [now, setNow] = useState(() => new Date());
+  const [liveMode, setLiveMode] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [pendingCommand, setPendingCommand] = useState("");
+  const [standby, setStandby] = useState(readStandbyPreference);
+  const liveModeRef = useRef(false);
+  const recognitionRef = useRef<any>(null);
+  const standbyRecognitionRef = useRef<any>(null);
+  const standbyRef = useRef(standby);
+  const lastAlertCountRef = useRef(activeAlertsCount);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    liveModeRef.current = liveMode;
+  }, [liveMode]);
+  const sayResponse = (text: string) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    setSpeaking(true);
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+  const ask = trpc.jarvis.ask.useMutation({
+    onSuccess: result => {
+      setAnswer(result.answer);
+      setProvider(result.provider);
+      if (liveModeRef.current) {
+        sayResponse(result.answer);
+        setLiveMode(false);
+      }
+    },
+    onError: () => {
+      setAnswer(
+        "JARVIS is temporarily unavailable. Check the server connection and try again."
+      );
+      setProvider("Unavailable");
+    },
+  });
+  const beginStandbyRecognition = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition || !standbyRef.current) return;
+    standbyRecognitionRef.current?.stop();
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.onstart = () => setListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[event.results.length - 1][0]
+        .transcript as string;
+      const wakeIndex = transcript.toLowerCase().indexOf("jarvis");
+      if (wakeIndex < 0) return;
+      const request = transcript
+        .slice(wakeIndex + "jarvis".length)
+        .replace(/^[\s,:-]+/, "")
+        .trim();
+      if (!request) {
+        sayResponse("Yes, Anbu. I’m listening.");
+        return;
+      }
+      setQuestion(request);
+      const command = request.match(
+        /\b(assign|reassign|move|mark|update|set)\b.*\b(TKT[- ]?\d+)\b.*\b(Crew (?:Alpha|Bravo|Charlie|Delta)|open|in progress|resolved|closed)\b/i
+      );
+      if (role === "Admin" && command) {
+        setPendingCommand(request);
+        sayResponse(`I heard: ${request}. Please confirm on screen.`);
+      } else submit(request);
+    };
+    recognition.onerror = (event: any) => {
+      if (
+        event.error === "not-allowed" ||
+        event.error === "service-not-allowed"
+      ) {
+        standbyRef.current = false;
+        writeStandbyPreference(false);
+        setStandby(false);
+        setListening(false);
+        toastAction("Microphone permission is required for JARVIS standby");
+      }
+    };
+    recognition.onend = () => {
+      setListening(false);
+      if (standbyRef.current)
+        window.setTimeout(() => beginStandbyRecognition(), 300);
+    };
+    standbyRecognitionRef.current = recognition;
+    recognition.start();
+  };
+  useEffect(() => {
+    standbyRef.current = standby;
+    writeStandbyPreference(standby);
+    if (standby && role === "Admin") {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setStandby(false);
+        toastAction("Standby listening is not supported in this browser");
+        return;
+      }
+      beginStandbyRecognition();
+    } else {
+      standbyRecognitionRef.current?.stop();
+      setListening(false);
+    }
+    return () => standbyRecognitionRef.current?.stop();
+  }, [standby, role]);
+  useEffect(() => {
+    if (!standby || role !== "Admin") {
+      lastAlertCountRef.current = activeAlertsCount;
+      return;
+    }
+    if (activeAlertsCount > lastAlertCountRef.current) {
+      const message = `Anbu, I detected ${activeAlertsCount - lastAlertCountRef.current} new operational alert${activeAlertsCount - lastAlertCountRef.current === 1 ? "" : "s"}. I’m ready to review the affected tickets with you.`;
+      setAnswer(message);
+      setProvider("JARVIS autonomous monitor");
+      sayResponse(message);
+    }
+    lastAlertCountRef.current = activeAlertsCount;
+  }, [activeAlertsCount, role, standby]);
+  const toggleStandby = () => {
+    if (standby) {
+      setStandby(false);
+      sayResponse("JARVIS standby is now disabled.");
+    } else {
+      setStandby(true);
+      sayResponse("Standby enabled. Say JARVIS when you need me, Anbu.");
+    }
+  };
+  const submit = (value = question) => {
+    if (!value.trim()) return;
+    ask.mutate({
+      question: value,
+      context: `Current time in Asia/Kolkata: ${now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}; Role: ${role}; Employee crew: ${crewName}; Active alerts: ${activeAlertsCount}; Live tickets: ${activeTickets
+        .slice(0, 8)
+        .map(
+          item =>
+            `${item.id} ${item.status} ${item.crew} deadline ${item.deadline}`
+        )
+        .join(" | ")}`,
+    });
+  };
+  const toggleLiveConversation = () => {
+    if (standby)
+      return toastAction("JARVIS is on standby. Say JARVIS to call me.");
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      setLiveMode(false);
+      return;
+    }
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition)
+      return toastAction(
+        "Live voice conversation is not supported in this browser"
+      );
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onstart = () => {
+      setLiveMode(true);
+      setListening(true);
+    };
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript as string;
+      setQuestion(transcript);
+      const command = transcript.match(
+        /\b(assign|reassign|move|mark|update|set)\b.*\b(TKT[- ]?\d+)\b.*\b(Crew (?:Alpha|Bravo|Charlie|Delta)|open|in progress|resolved|closed)\b/i
+      );
+      if (role === "Admin" && command) {
+        setPendingCommand(transcript);
+        speakText(`I heard: ${transcript}. Please confirm on screen.`);
+      } else {
+        submit(transcript);
+      }
+    };
+    recognition.onerror = () => {
+      setListening(false);
+      setLiveMode(false);
+      toastAction("Microphone input could not be read");
+    };
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+  return (
+    <section className="detail-view">
+      <SectionHead
+        icon={Sparkles}
+        title="JARVIS"
+        description="ChatGPT-powered SSOP assistant · say JARVIS to call me when standby is enabled"
+      />
+      <div
+        className={`jarvis-shell ${listening ? "is-listening" : speaking ? "is-speaking" : ""}`}
+      >
+        <div className="jarvis-orb">
+          <Sparkles size={26} />
+          <div
+            className="jarvis-waveform"
+            aria-label={
+              listening
+                ? "JARVIS is listening"
+                : speaking
+                  ? "JARVIS is speaking"
+                  : "JARVIS is ready"
+            }
+          >
+            {[1, 2, 3, 4, 5, 6, 7].map(bar => (
+              <i key={bar} />
+            ))}
+          </div>
+        </div>
+        <div className="jarvis-copy">
+          <span className="map-side-label">AI SYSTEM GUIDE · {provider}</span>
+          <small className="jarvis-live-clock">
+            Live context synced ·{" "}
+            {now.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })} IST
+          </small>
+          <h2>
+            {listening
+              ? standby
+                ? "Listening for “JARVIS”…"
+                : "Listening for you, Anbu…"
+              : speaking
+                ? "Speaking to you, Anbu…"
+                : standby
+                  ? "On standby for you, Anbu"
+                  : "Hello, I’m JARVIS"}
+          </h2>
+          <p>{answer}</p>
+        </div>
+        <div className="jarvis-input">
+          <input
+            value={question}
+            onChange={e => setQuestion(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && submit()}
+            placeholder="Ask JARVIS about SSOP…"
+          />
+          <button
+            className="button primary"
+            onClick={() => submit()}
+            disabled={ask.isPending}
+          >
+            {ask.isPending ? "Thinking…" : "Ask"}
+          </button>
+          <button
+            className={`button ${listening ? "danger" : "secondary"}`}
+            onClick={toggleLiveConversation}
+          >
+            <Mic size={14} /> {listening ? "Stop" : "Live conversation"}
+          </button>
+          <button
+            className={`button ${standby ? "primary" : "secondary"}`}
+            onClick={toggleStandby}
+          >
+            <Radio size={14} />{" "}
+            {standby ? "Standby listening" : "Enable standby"}
+          </button>
+        </div>
+        <div className="jarvis-command-note">
+          {pendingCommand ? (
+            <>
+              <strong>Confirm voice command</strong>
+              <span>{pendingCommand}</span>
+              <div>
+                <button
+                  className="button primary"
+                  onClick={() => {
+                    onVoiceCommand(pendingCommand);
+                    setPendingCommand("");
+                  }}
+                >
+                  Confirm command
+                </button>
+                <button
+                  className="button secondary"
+                  onClick={() => setPendingCommand("")}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          ) : (
+            <span>
+              {standby
+                ? "Standby is active. Say “JARVIS” followed by a question or Admin command. Ticket commands still require confirmation."
+                : "Enable standby to let JARVIS listen for the wake word. Admin ticket commands still require confirmation."}
+            </span>
+          )}
+        </div>
+        <div className="jarvis-suggestions">
+          <button
+            onClick={() => {
+              setQuestion("Explain the SSOP ticket lifecycle");
+            }}
+          >
+            Ticket lifecycle
+          </button>
+          <button
+            onClick={() => {
+              setQuestion("What can an employee do?");
+            }}
+          >
+            Employee access
+          </button>
+          <button
+            onClick={() => {
+              setQuestion("How should I respond to a critical sensor?");
+            }}
+          >
+            Critical sensor
+          </button>
+        </div>
+        <div className="jarvis-activity">
+          <div className="jarvis-activity-head">
+            <div>
+              <span className="map-side-label">AUTONOMOUS ACTIVITY</span>
+              <h3>Assignment log</h3>
+            </div>
+            <span className="activity-live">
+              <span className="live-dot" /> Live
+            </span>
+          </div>
+          {assignmentLogs.length ? (
+            <div className="jarvis-activity-list">
+              {assignmentLogs.slice(0, 8).map(entry => (
+                <div className="jarvis-activity-item" key={entry.id}>
+                  <span className="activity-node">
+                    <Check size={12} />
+                  </span>
+                  <div>
+                    <strong>
+                      I did assigned {entry.ticketId} to {entry.crewName}
+                    </strong>
+                    <small>
+                      {new Date(entry.assignedAt).toLocaleString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}{" "}
+                      IST · {entry.assignedBy}
+                    </small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="jarvis-activity-empty">
+              <Radio size={14} /> No autonomous assignments yet.
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-function DetailView({ view, navigate, openTicket, openSensor, closedTicketIds, verificationTicketIds, onApprove, activeTickets, proofPhotos, historyEntries, historyLoading, onOpenHistory, jarvisAssignmentLogs, role, onRoleChange, onEmployeeChange, employeeCrew, employeeName, onVoiceCommand }: { view: View; navigate: (view: View) => void; openTicket: (id: string) => void; openSensor: (point: { id: string; fill: number; status: string; ward?: string; crew?: string; label?: string }) => void; closedTicketIds: string[]; verificationTicketIds: string[]; onApprove: (id: string) => void; activeTickets: Ticket[]; proofPhotos: Record<string, string[]>; historyEntries: HistoryEntry[]; historyLoading: boolean; onOpenHistory: (entry: HistoryEntry) => void; jarvisAssignmentLogs: JarvisAssignmentLog[]; role: Role; onRoleChange: (role: Role) => void; onEmployeeChange: (crewName: string) => void; employeeCrew: string; employeeName: string; onVoiceCommand: (command: string) => void }) { const sensorPoint = useCallback((point: { id: string; fill: number; status: string }) => { const data = points.find((item) => item[0] === point.id); openSensor({ ...point, ward: data?.[2], crew: data?.[3], label: data?.[4] }); }, [openSensor]); if (view === "Alerts" && role === "Employee") return <EmployeeNotificationsView verificationTicketIds={verificationTicketIds} proofPhotos={proofPhotos} />; if (view === "Alerts") return <AlertsView openTicket={openTicket} closedTicketIds={closedTicketIds} verificationTicketIds={verificationTicketIds} onApprove={onApprove} proofPhotos={proofPhotos} />; if (view === "JARVIS") return <JarvisView role={role} crewName={employeeCrew} activeTickets={activeTickets} activeAlertsCount={alerts.filter((item) => !isAlertClosed(item, closedTicketIds)).length} assignmentLogs={jarvisAssignmentLogs} onVoiceCommand={onVoiceCommand} />; if (view === "My Tasks") return <EmployeeTasksView activeTickets={activeTickets} openTicket={openTicket} verificationCount={verificationTicketIds.length} navigate={navigate} crewName={employeeCrew} displayName={employeeName} />; if (view === "Tickets") return <TicketsView openTicket={openTicket} activeTickets={activeTickets} />; if (view === "Ticket History") return <HistoryView entries={historyEntries} loading={historyLoading} onOpen={onOpenHistory} />; if (view === "Live Map") return <section className="detail-view"><SectionHead icon={MapIcon} title="Live Map" description="Chennai road network with live sewer point overlays" action={<button className="button secondary" onClick={() => toastAction("Map centred on Chennai Corporation")}>Centre on Chennai</button>} /><div className="full-map-layout"><div className="full-google-map"><GoogleChennaiMap onPointSelect={sensorPoint} /></div><div className="map-side-panel"><span className="map-side-label">LIVE MAP</span><h2>Chennai</h2><p>Native Google road map with sensor overlays.</p><div className="map-side-stat"><strong>1,248</strong><span>devices online</span></div><div className="map-detail-line"><span>Critical points</span><b className="red-text">07</b></div><div className="map-detail-line"><span>Predictive risk</span><b className="amber-text">14 wards</b></div><button className="button primary full" onClick={() => openSensor({ id: "MH-0427", fill: 97, status: "Critical", ward: "Ward 05", crew: "Crew Alpha", label: "East Canal Road" })}>Open sensor panel <Activity size={14} /></button><div className="map-legend side"><span><i className="legend-dot green" /> &lt;80%</span><span><i className="legend-dot yellow" /> 80–94%</span><span><i className="legend-dot red" /> ≥95%</span></div></div></div></section>; if (view === "Crew Dispatch") return <section className="detail-view"><SectionHead icon={Truck} title="Crew dispatch" description="Position crews before water reaches the road" action={<button className="button primary" onClick={() => toastAction("Dispatch board refreshed")}>Refresh board <RefreshCw size={14} /></button>} /><div className="crew-grid">{crews.map((crew) => <button className="crew-card" key={crew.name} onClick={() => toastAction(`${crew.name} selected · action menu opened`)}><div className="crew-avatar large cyan">{crew.name.replace("Crew ", "").charAt(0)}</div><div><strong>{crew.name}</strong><span>{crew.zone}</span></div><em>{crew.status}</em><small>{crew.eta === "—" ? "Ready for assignment" : `ETA ${crew.eta}`}</small><ChevronRight size={15} /></button>)}</div><div className="dispatch-callout"><MessageCircle size={18} /><div><strong>Crew coordination</strong><p>Open an active ticket to record assignment and field updates.</p></div><button className="button primary" onClick={() => toastAction("Select a crew to open its active ticket")}>Compose message <Send size={14} /></button></div><div className="dispatch-table">{crews.map((crew) => <div key={crew.name}><span><strong>{crew.name}</strong><small>{crew.zone}</small></span><span className="message-state">Ready</span><button className="button tiny secondary" onClick={() => void openTicket("TKT-1098")}><MessageCircle size={13} /> Open ticket</button></div>)}</div></section>; if (view === "Risk Analytics") return <section className="detail-view"><SectionHead icon={Sparkles} title="Risk analytics" description="Predictive flood risk from levels, rainfall nowcast, and history" action={<button className="button secondary" onClick={() => downloadReport("MH-0427", "pdf")}>Export analysis <Download size={14} /></button>} /><div className="risk-detail-grid">{wards.map((ward) => <button className="risk-detail-card" key={ward.name} onClick={() => toastAction(`${ward.name}: ${ward.action}`)}><div><i className={`risk-dot ${ward.tone}`} />{ward.name}</div><strong>{ward.risk}<small>/100</small></strong><div className="risk-progress"><i className={ward.tone} style={{ width: `${ward.risk}%` }} /></div><p>{ward.action} <ChevronRight size={13} /></p></button>)}</div><div className="prediction-panel"><div><span className="map-side-label">MODEL EXPLANATION</span><h2>Rain is amplifying fill risk</h2><p>18 mm/h nowcast and recurring morning inflow are driving today’s forecast.</p></div><div className="prediction-metric"><strong>92%</strong><span>Ward 05 risk at<br />10:15 IST</span></div><button className="button primary" onClick={() => navigate("Crew Dispatch")}>Review actions <ChevronRight size={14} /></button></div></section>; if (view === "Sensor Health") return <section className="detail-view"><SectionHead icon={Radio} title="Sensor health" description="Device uptime, battery, signal strength, and fouling status" action={<button className="button primary" onClick={() => downloadReport("MH-0427", "csv")}>Export report <Download size={14} /></button>} /><div className="health-summary"><div><CheckCircle2 size={16} /><strong>1,248</strong><span>Healthy</span></div><div><BatteryCharging size={16} /><strong>08</strong><span>Low battery</span></div><div><Signal size={16} /><strong>05</strong><span>Weak signal</span></div><div><CircleDot size={16} /><strong>00</strong><span>Offline</span></div></div><div className="detail-table health-detail-table">{points.slice(0, 4).map((point) => <button className="detail-row" key={point[0]} onClick={() => openSensor({ id: point[0], fill: point[1], status: point[1] >= 95 ? "Critical" : point[1] >= 80 ? "Pre-alert" : "Normal", ward: point[2], crew: point[3], label: point[4] })}><span className="health-icon green"><Wifi size={14} /></span><span className="row-primary"><strong>{point[0]}</strong><small>{point[2]} · Last seen 2 min ago</small></span><span>86% battery</span><span className="mint-text">OK</span><ChevronRight size={15} /></button>)}</div></section>; if (view === "Citizen Reports") return <section className="detail-view"><SectionHead icon={Users} title="Citizen reports" description="Correlate public reports with sensor alerts to prioritize response" action={<button className="button primary" onClick={() => toastAction("Citizen report intake opened")}>Add report <Plus size={14} /></button>} /><div className="citizen-grid">{[["09:21", "East Canal Road", "Water rising across the service lane", "Matched with MH-0427", "Verified"], ["09:12", "Millers Junction", "Flooding at the bus stop entrance", "Matched with MH-0534", "Verified"], ["08:48", "Purasawalkam High Road", "Blocked drain near house no. 18", "No sensor data", "New"]].map(([time, location, description, correlation, status]) => <button className="citizen-card" key={time + location} onClick={() => toastAction(`Citizen report from ${location} opened`)}><div><span>{time} IST</span><em className={status === "New" ? "amber-text" : "mint-text"}>{status}</em></div><strong>{location}</strong><p>{description}</p><small><span className="correlation-dot" />{correlation}</small><ChevronRight size={15} /></button>)}</div></section>; return <section className="detail-view"><SectionHead icon={Settings2} title="Workspace settings" description="Configure operating city, roles, alerts, and report delivery" action={<div className="role-switcher"><span>Current user</span><button className={role === "Admin" ? "active" : ""} onClick={() => onRoleChange("Admin")}>Admin</button><button className={role === "Employee" ? "active" : ""} onClick={() => onRoleChange("Employee")}>Employee</button>{role === "Employee" && <select value={employeeCrew} onChange={(event) => onEmployeeChange(event.target.value)}><option value="Crew Alpha">Crew Alpha</option><option value="Crew Bravo">Crew Bravo</option><option value="Crew Charlie">Crew Charlie</option><option value="Crew Delta">Crew Delta</option></select>}</div>} /><div className="settings-list">{[["Operating city", "Chennai Corporation · North zone", MapIcon], ["Alert thresholds", "Adaptive 80–95% · two-stage escalation", Zap], ["Notifications", "Control log, ticket updates", Bell], ["User roles", "Commissioner view · 4 operators", Users], ["Weekly reports", "Every Monday · 08:00 IST", ClipboardList]].map(([title, description, Icon]) => <button key={String(title)} onClick={() => toastAction(`${String(title)} settings opened`)}><span className="settings-icon">{createElement(Icon as IconType, { size: 16 })}</span><div><strong>{String(title)}</strong><small>{String(description)}</small></div><ChevronRight size={15} /></button>)}</div><a className="founder-profile-panel" href="https://v0-anbumathi-chezhian-2203.vercel.app/" target="_blank" rel="noreferrer"><div className="founder-profile-mark">AC</div><div><span className="map-side-label">FOUNDER & BUILDER</span><h2>Anbumathi Chezhian.M</h2><p>Electronics & IoT Developer · Building connected systems from sensor to cloud.</p><strong>Open founder portfolio <ExternalLink size={14} /></strong></div></a></section>; }
-export default function Home() { const [loggedIn, setLoggedIn] = useState(false); const [role, setRole] = useState<Role>("Employee"); const [activeCrew, setActiveCrew] = useState<string>("Crew Alpha"); const [activeView, setActiveView] = useState<View>("Overview"); const [assignments] = useState<Record<string, string>>(() => Object.fromEntries(tickets.filter((item) => item.status === "Open").map((item, index) => [item.id, employeeCrews[index % employeeCrews.length]]))); const [mobileMenuOpen, setMobileMenuOpen] = useState(false); const [ticket, setTicket] = useState<typeof tickets[number] | null>(null); const [historyEntry, setHistoryEntry] = useState<HistoryEntry | null>(null); const [closedTicketIds, setClosedTicketIds] = useState<string[]>([]); const [verificationTicketIds, setVerificationTicketIds] = useState<string[]>([]); const [proofPhotos, setProofPhotos] = useState<Record<string, string[]>>({}); const [ticketStatusOverrides, setTicketStatusOverrides] = useState<Record<string, string>>({}); const [assignmentOverrides, setAssignmentOverrides] = useState<Record<string, string>>({}); const historyQuery = trpc.ticketHistory.list.useQuery(); const profileQuery = trpc.workforce.profiles.useQuery(); const profilesSeeded = useRef(false); const assignmentsSeeded = useRef(false); const assignmentQuery = trpc.workforce.assignments.useQuery(); const statusQuery = trpc.workforce.statuses.useQuery(); const seedProfiles = trpc.workforce.seedProfiles.useMutation(); const assignTicket = trpc.workforce.assign.useMutation(); const jarvisAssignmentQuery = trpc.workforce.jarvisAssignments.useQuery(); const recordJarvisAssignment = trpc.workforce.recordJarvisAssignment.useMutation(); const updateTicketStatus = trpc.workforce.updateStatus.useMutation(); const recordApproval = trpc.ticketHistory.recordApproval.useMutation(); const verifyAdminPasscode = trpc.auth.verifyAdminPasscode.useMutation(); useEffect(() => { if (historyQuery.data?.length) setClosedTicketIds((current) => Array.from(new Set([...current, ...historyQuery.data.map((entry) => entry.ticketId)]))); }, [historyQuery.data]); const persistedAssignments = useMemo(() => Object.fromEntries((assignmentQuery.data ?? []).map((entry) => [entry.ticketId, entry.crewName])), [assignmentQuery.data]); const persistedStatuses = useMemo(() => Object.fromEntries((statusQuery.data ?? []).map((entry) => [entry.ticketId, entry.status])), [statusQuery.data]); const assignedTickets = tickets.map((item) => ({ ...item, status: ticketStatusOverrides[item.id] ?? persistedStatuses[item.id] ?? item.status, crew: assignmentOverrides[item.id] ?? persistedAssignments[item.id] ?? assignments[item.id] ?? item.crew })); useEffect(() => { if (!profilesSeeded.current && !profileQuery.data?.length && !profileQuery.isLoading && !seedProfiles.isPending) { profilesSeeded.current = true; seedProfiles.mutate({ profiles: employeeCrews.map((crewName) => ({ crewName, displayName: crewName.replace("Crew ", "") + " field operator" })) }); } }, [profileQuery.data, profileQuery.isLoading, seedProfiles.isPending]); useEffect(() => { if (!assignmentsSeeded.current && !assignmentQuery.isLoading) { const missing = tickets.filter((item) => item.status === "Open" && !persistedAssignments[item.id]); if (missing.length) { assignmentsSeeded.current = true; missing.forEach((item) => { const crewName = assignments[item.id] ?? employeeCrews[0]; void assignTicket.mutateAsync({ ticketId: item.id, crewName, assignedBy: "JARVIS autonomous assignment" }); void recordJarvisAssignment.mutateAsync({ ticketId: item.id, crewName, assignedBy: "JARVIS autonomous assignment" }).then(() => void jarvisAssignmentQuery.refetch()); }); } } }, [assignmentQuery.isLoading, persistedAssignments]); const executeVoiceCommand = (command: string) => { if (role !== "Admin") return toastAction("Only Admin can execute ticket commands"); const ticketMatch = command.match(/(TKT[- ]?\d+)/i); const crewMatch = command.match(/(Crew (?:Alpha|Bravo|Charlie|Delta))/i); const statusMatch = command.match(/\b(Open|In Progress|Resolved|Closed)\b/i); const ticketId = ticketMatch?.[1]?.replace(" ", "-").toUpperCase(); if (!ticketId) return toastAction("No ticket ID found"); if (crewMatch) { setAssignmentOverrides((current) => ({ ...current, [ticketId]: crewMatch[1] })); void assignTicket.mutateAsync({ ticketId, crewName: crewMatch[1] }); void recordJarvisAssignment.mutateAsync({ ticketId, crewName: crewMatch[1], assignedBy: "JARVIS autonomous assignment" }).then(() => void jarvisAssignmentQuery.refetch()); speakText(`I did assigned the ticket ${ticketId} to ${crewMatch[1]}.`); toastAction(`I did assigned the ticket ${ticketId} to ${crewMatch[1]}.`); } if (statusMatch) { const nextStatus = statusMatch[1]; setTicketStatusOverrides((current) => ({ ...current, [ticketId]: nextStatus })); void updateTicketStatus.mutateAsync({ ticketId, status: nextStatus, updatedBy: "JARVIS voice command" }); toastAction(`${ticketId} status updated to ${nextStatus}`); } }; const activeTickets = assignedTickets.filter((item) => !closedTicketIds.includes(item.id)); const activeAlertsCount = alerts.filter((item) => !isAlertClosed(item, closedTicketIds)).length; const [sensor, setSensor] = useState<{ id: string; fill: number; status: string; ward?: string; crew?: string; label?: string } | null>(null); const navigate = (view: View) => { if (role === "Employee" && !["My Tasks", "Alerts", "JARVIS", "Settings"].includes(view)) { toastAction("Admin access required for command-centre views"); return; } setActiveView(view); setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }; const openTicket = (id: string) => { const found = assignedTickets.find((item) => item.id === id); if (found && !closedTicketIds.includes(found.id)) setTicket(found); }; const saveProofPhotos = (id: string, photos: string[]) => setProofPhotos((current) => ({ ...current, [id]: photos })); const requestVerification = (id: string) => { setVerificationTicketIds((current) => current.includes(id) ? current : [...current, id]); toastAction(`Verification sent to notifications · ${id}`); setTicket(null); }; const approveTicket = (id: string) => { const item = assignedTickets.find((candidate) => candidate.id === id); if (!item) return; const point = points.find((candidate) => candidate[0] === item.manhole); recordApproval.mutate({ ticketId: item.id, manhole: item.manhole, title: item.title, status: "Approved", crew: item.crew, deadline: item.deadline, ward: point?.[2], fill: point?.[1], proofPhotos: proofPhotos[id] ?? [], details: `Approved after field completion review for ${item.title}. Proof-of-work was inspected in the notification queue.`, approvedBy: "ANBU · Commissioner view" }, { onSuccess: () => { setClosedTicketIds((current) => Array.from(new Set([...current, id]))); setVerificationTicketIds((current) => current.filter((itemId) => itemId !== id)); setTicket(null); void historyQuery.refetch(); toastAction(`${id} approved, archived, and closed`); }, onError: () => toastAction(`Could not archive ${id} · check database connection`) }); }; const openSensor = (point: { id: string; fill: number; status: string; ward?: string; crew?: string; label?: string }) => setSensor(point); const activeProfile = (profileQuery.data ?? []).find((profile) => profile.crewName === activeCrew); const employeeName = activeProfile?.displayName ?? activeCrew.replace("Crew ", "") + " field operator"; const changeEmployeeProfile = (crewName: string) => { setActiveCrew(crewName); setRole("Employee"); setActiveView("My Tasks"); toastAction(`Signed in as ${crewName}`); }; const verifyAdmin = async (password: string) => { try { await verifyAdminPasscode.mutateAsync({ passcode: password }); return true; } catch { return false; } }; const changeRole = async (nextRole: Role) => { if (nextRole === "Admin") { const password = window.prompt("Enter Admin password"); if (!password || !(await verifyAdmin(password))) { toastAction("Admin access denied"); return; } } setRole(nextRole); setActiveView(nextRole === "Employee" ? "My Tasks" : "Overview"); toastAction(`Switched to ${nextRole} workspace`); }; const dispatch = (crew: string) => { toastAction(`${crew} dispatch recorded in the control log`); }; const signIn = (nextRole: Role, crew: string) => { setRole(nextRole); setActiveCrew(crew); setLoggedIn(true); setActiveView(nextRole === "Admin" ? "Overview" : "My Tasks"); toastAction(`Signed in as ${nextRole === "Admin" ? "Admin" : crew}`); }; if (!loggedIn) return <LoginScreen onLogin={signIn} onAdminAuth={verifyAdmin} />; return <div className="app-shell"><aside className={`sidebar ${mobileMenuOpen ? "sidebar-open" : ""}`}><div className="brand-lockup"><div className="brand-mark"><span /><span /><span /></div><div><div className="brand-name">SSOP</div><div className="brand-subtitle">Smart Sewer Operations</div></div><button className="sidebar-close mobile-only" onClick={() => setMobileMenuOpen(false)}><X size={18} /></button></div><div className="city-switcher"><div className="city-emblem">CH</div><div className="city-copy"><span className="eyebrow">Operating city</span><strong>Chennai Corporation</strong></div><ChevronDown size={15} className="muted-icon" /></div><nav className="nav-groups">{(role === "Admin" ? menu : [{ label: "Employee workspace", items: [{ label: "My Tasks", icon: ClipboardList }, { label: "Alerts", icon: Bell }, { label: "JARVIS", icon: Sparkles }, { label: "Settings", icon: Settings2 }] }]).map((group) => <div className="nav-group" key={group.label}><div className="nav-label">{group.label}</div>{group.items.map((item) => { const Icon = item.icon; const active = activeView === item.label; return <button className={`nav-item ${active ? "active" : ""}`} key={item.label} onClick={() => navigate(item.label as View)}><Icon size={17} /><span>{item.label}</span>{(() => { const itemCount = item.label === "Alerts" ? activeAlertsCount : item.label === "Tickets" ? activeTickets.length : 0; return itemCount > 0 ? <b>{itemCount}</b> : null; })()}{active && <span className="active-rail" />}</button>; })}</div>)}</nav><div className="sidebar-bottom"><a className="founder-card" href="https://v0-anbumathi-chezhian-2203.vercel.app/" target="_blank" rel="noreferrer"><div className="founder-avatar">AC</div><div className="founder-copy"><span>FOUNDER</span><strong>Anbumathi Chezhian.M</strong><small>Electronics & IoT Developer</small></div><ExternalLink size={14} /><div className="founder-hover-summary"><span>FEATURED IOT PROJECTS</span><strong>Simple Hackpad · DARK SIGNAL</strong><small>RaspCamX · WinXport · ASTRADEV</small><em>Hover to preview · Open portfolio for details</em></div></a><div className="monsoon-card"><div className="monsoon-icon"><CloudRain size={17} /></div><div><strong>Monsoon mode</strong><span>Active · 18 days</span></div><span className="live-dot" /></div><div className="user-card"><div className="avatar">AN</div><div className="user-copy"><strong>{role === "Admin" ? "ANBU" : "Field operator"}</strong><span>{role === "Admin" ? "Commissioner view" : "Employee view"}</span></div><MoreHorizontal size={17} className="muted-icon" /></div></div></aside><div className="main-area"><header className="topbar"><div className="topbar-left"><button className="mobile-menu mobile-only" onClick={() => setMobileMenuOpen(true)}><Menu size={19} /></button><div><div className="breadcrumb"><span>Chennai / North zone</span><ChevronRight size={13} /><strong>{activeView}</strong></div><h1>{activeView === "Overview" ? "Command centre" : activeView}</h1></div></div><div className="topbar-actions"><div className="system-status"><span className="live-dot" /> All systems operational</div><VoiceUpdate text={`${activeAlertsCount} active alerts and ${activeTickets.length} open tickets require attention.`} /><div className="topbar-divider" /><button className="icon-button search-button" onClick={() => toastAction("Search across manholes, tickets and wards")}><Search size={18} /></button><button className="icon-button notification-button" onClick={() => navigate("Alerts")}><Bell size={18} /><span>{verificationTicketIds.length}</span></button><button className="topbar-profile" onClick={() => navigate("Settings")}><div className="avatar small">AN</div><ChevronDown size={14} /></button></div></header><main className="content">{activeView === "Overview" && role === "Admin" ? <Overview navigate={navigate} openTicket={openTicket} openSensor={openSensor} sync={() => toastAction("Live telemetry synced · 1,248 devices checked")} closedTicketIds={closedTicketIds} activeAlertsCount={activeAlertsCount} /> : <DetailView view={activeView} navigate={navigate} openTicket={openTicket} openSensor={openSensor} closedTicketIds={closedTicketIds} verificationTicketIds={verificationTicketIds} proofPhotos={proofPhotos} activeTickets={activeTickets} historyEntries={(historyQuery.data ?? []) as HistoryEntry[]} historyLoading={historyQuery.isLoading} onOpenHistory={setHistoryEntry} jarvisAssignmentLogs={(jarvisAssignmentQuery.data ?? []) as JarvisAssignmentLog[]} onApprove={approveTicket} role={role} onRoleChange={changeRole} onEmployeeChange={changeEmployeeProfile} employeeCrew={activeCrew} employeeName={employeeName} onVoiceCommand={executeVoiceCommand} />}</main><footer className="footer"><span>SSOP control room · North zone</span><span><span className="live-dot" /> Telemetry stream healthy</span><span>v2.1 prototype</span></footer></div><TicketDrawer role={role} ticket={ticket} onClose={() => setTicket(null)} onToast={toastAction} onDispatch={dispatch} onRequestVerification={requestVerification} proofPhotos={ticket ? (proofPhotos[ticket.id] ?? []) : []} onPhotosChange={saveProofPhotos} /><HistoryDrawer entry={historyEntry} onClose={() => setHistoryEntry(null)} /><SensorDrawer point={sensor} onClose={() => setSensor(null)} onTicket={() => { setSensor(null); openTicket("TKT-1098"); }} /></div>; }
+function DetailView({
+  view,
+  navigate,
+  openTicket,
+  openSensor,
+  closedTicketIds,
+  verificationTicketIds,
+  onApprove,
+  activeTickets,
+  proofPhotos,
+  historyEntries,
+  historyLoading,
+  onOpenHistory,
+  jarvisAssignmentLogs,
+  role,
+  onRoleChange,
+  onEmployeeChange,
+  employeeCrew,
+  employeeName,
+  onVoiceCommand,
+}: {
+  view: View;
+  navigate: (view: View) => void;
+  openTicket: (id: string) => void;
+  openSensor: (point: {
+    id: string;
+    fill: number;
+    status: string;
+    ward?: string;
+    crew?: string;
+    label?: string;
+  }) => void;
+  closedTicketIds: string[];
+  verificationTicketIds: string[];
+  onApprove: (id: string) => void;
+  activeTickets: Ticket[];
+  proofPhotos: Record<string, string[]>;
+  historyEntries: HistoryEntry[];
+  historyLoading: boolean;
+  onOpenHistory: (entry: HistoryEntry) => void;
+  jarvisAssignmentLogs: JarvisAssignmentLog[];
+  role: Role;
+  onRoleChange: (role: Role) => void;
+  onEmployeeChange: (crewName: string) => void;
+  employeeCrew: string;
+  employeeName: string;
+  onVoiceCommand: (command: string) => void;
+}) {
+  const sensorPoint = useCallback(
+    (point: { id: string; fill: number; status: string }) => {
+      const data = points.find(item => item[0] === point.id);
+      openSensor({
+        ...point,
+        ward: data?.[2],
+        crew: data?.[3],
+        label: data?.[4],
+      });
+    },
+    [openSensor]
+  );
+  if (view === "Alerts" && role === "Employee")
+    return (
+      <EmployeeNotificationsView
+        verificationTicketIds={verificationTicketIds}
+        proofPhotos={proofPhotos}
+      />
+    );
+  if (view === "Alerts")
+    return (
+      <AlertsView
+        openTicket={openTicket}
+        closedTicketIds={closedTicketIds}
+        verificationTicketIds={verificationTicketIds}
+        onApprove={onApprove}
+        proofPhotos={proofPhotos}
+      />
+    );
+  if (view === "JARVIS")
+    return (
+      <JarvisView
+        role={role}
+        crewName={employeeCrew}
+        activeTickets={activeTickets}
+        activeAlertsCount={
+          alerts.filter(item => !isAlertClosed(item, closedTicketIds)).length
+        }
+        assignmentLogs={jarvisAssignmentLogs}
+        onVoiceCommand={onVoiceCommand}
+      />
+    );
+  if (view === "My Tasks")
+    return (
+      <EmployeeTasksView
+        activeTickets={activeTickets}
+        openTicket={openTicket}
+        verificationCount={verificationTicketIds.length}
+        navigate={navigate}
+        crewName={employeeCrew}
+        displayName={employeeName}
+      />
+    );
+  if (view === "Tickets")
+    return (
+      <TicketsView openTicket={openTicket} activeTickets={activeTickets} />
+    );
+  if (view === "Ticket History")
+    return (
+      <HistoryView
+        entries={historyEntries}
+        loading={historyLoading}
+        onOpen={onOpenHistory}
+      />
+    );
+  if (view === "Live Map")
+    return (
+      <section className="detail-view">
+        <SectionHead
+          icon={MapIcon}
+          title="Live Map"
+          description="Chennai road network with live sewer point overlays"
+          action={
+            <button
+              className="button secondary"
+              onClick={() => toastAction("Map centred on Chennai Corporation")}
+            >
+              Centre on Chennai
+            </button>
+          }
+        />
+        <div className="full-map-layout">
+          <div className="full-google-map">
+            <GoogleChennaiMap onPointSelect={sensorPoint} />
+          </div>
+          <div className="map-side-panel">
+            <span className="map-side-label">LIVE MAP</span>
+            <h2>Chennai</h2>
+            <p>Native Google road map with sensor overlays.</p>
+            <div className="map-side-stat">
+              <strong>1,248</strong>
+              <span>devices online</span>
+            </div>
+            <div className="map-detail-line">
+              <span>Critical points</span>
+              <b className="red-text">07</b>
+            </div>
+            <div className="map-detail-line">
+              <span>Predictive risk</span>
+              <b className="amber-text">14 wards</b>
+            </div>
+            <button
+              className="button primary full"
+              onClick={() =>
+                openSensor({
+                  id: "MH-0427",
+                  fill: 97,
+                  status: "Critical",
+                  ward: "Ward 05",
+                  crew: "Crew Alpha",
+                  label: "East Canal Road",
+                })
+              }
+            >
+              Open sensor panel <Activity size={14} />
+            </button>
+            <div className="map-legend side">
+              <span>
+                <i className="legend-dot green" /> &lt;80%
+              </span>
+              <span>
+                <i className="legend-dot yellow" /> 80–94%
+              </span>
+              <span>
+                <i className="legend-dot red" /> ≥95%
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  if (view === "Crew Dispatch")
+    return (
+      <section className="detail-view">
+        <SectionHead
+          icon={Truck}
+          title="Crew dispatch"
+          description="Position crews before water reaches the road"
+          action={
+            <button
+              className="button primary"
+              onClick={() => toastAction("Dispatch board refreshed")}
+            >
+              Refresh board <RefreshCw size={14} />
+            </button>
+          }
+        />
+        <div className="crew-grid">
+          {crews.map(crew => (
+            <button
+              className="crew-card"
+              key={crew.name}
+              onClick={() =>
+                toastAction(`${crew.name} selected · action menu opened`)
+              }
+            >
+              <div className="crew-avatar large cyan">
+                {crew.name.replace("Crew ", "").charAt(0)}
+              </div>
+              <div>
+                <strong>{crew.name}</strong>
+                <span>{crew.zone}</span>
+              </div>
+              <em>{crew.status}</em>
+              <small>
+                {crew.eta === "—" ? "Ready for assignment" : `ETA ${crew.eta}`}
+              </small>
+              <ChevronRight size={15} />
+            </button>
+          ))}
+        </div>
+        <div className="dispatch-callout">
+          <MessageCircle size={18} />
+          <div>
+            <strong>Crew coordination</strong>
+            <p>Open an active ticket to record assignment and field updates.</p>
+          </div>
+          <button
+            className="button primary"
+            onClick={() =>
+              toastAction("Select a crew to open its active ticket")
+            }
+          >
+            Compose message <Send size={14} />
+          </button>
+        </div>
+        <div className="dispatch-table">
+          {crews.map(crew => (
+            <div key={crew.name}>
+              <span>
+                <strong>{crew.name}</strong>
+                <small>{crew.zone}</small>
+              </span>
+              <span className="message-state">Ready</span>
+              <button
+                className="button tiny secondary"
+                onClick={() => void openTicket("TKT-1098")}
+              >
+                <MessageCircle size={13} /> Open ticket
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  if (view === "Risk Analytics")
+    return (
+      <section className="detail-view">
+        <SectionHead
+          icon={Sparkles}
+          title="Risk analytics"
+          description="Predictive flood risk from levels, rainfall nowcast, and history"
+          action={
+            <button
+              className="button secondary"
+              onClick={() => downloadReport("MH-0427", "pdf")}
+            >
+              Export analysis <Download size={14} />
+            </button>
+          }
+        />
+        <div className="risk-detail-grid">
+          {wards.map(ward => (
+            <button
+              className="risk-detail-card"
+              key={ward.name}
+              onClick={() => toastAction(`${ward.name}: ${ward.action}`)}
+            >
+              <div>
+                <i className={`risk-dot ${ward.tone}`} />
+                {ward.name}
+              </div>
+              <strong>
+                {ward.risk}
+                <small>/100</small>
+              </strong>
+              <div className="risk-progress">
+                <i className={ward.tone} style={{ width: `${ward.risk}%` }} />
+              </div>
+              <p>
+                {ward.action} <ChevronRight size={13} />
+              </p>
+            </button>
+          ))}
+        </div>
+        <div className="prediction-panel">
+          <div>
+            <span className="map-side-label">MODEL EXPLANATION</span>
+            <h2>Rain is amplifying fill risk</h2>
+            <p>
+              18 mm/h nowcast and recurring morning inflow are driving today’s
+              forecast.
+            </p>
+          </div>
+          <div className="prediction-metric">
+            <strong>92%</strong>
+            <span>
+              Ward 05 risk at
+              <br />
+              10:15 IST
+            </span>
+          </div>
+          <button
+            className="button primary"
+            onClick={() => navigate("Crew Dispatch")}
+          >
+            Review actions <ChevronRight size={14} />
+          </button>
+        </div>
+      </section>
+    );
+  if (view === "Sensor Health")
+    return (
+      <section className="detail-view">
+        <SectionHead
+          icon={Radio}
+          title="Sensor health"
+          description="Device uptime, battery, signal strength, and fouling status"
+          action={
+            <button
+              className="button primary"
+              onClick={() => downloadReport("MH-0427", "csv")}
+            >
+              Export report <Download size={14} />
+            </button>
+          }
+        />
+        <div className="health-summary">
+          <div>
+            <CheckCircle2 size={16} />
+            <strong>1,248</strong>
+            <span>Healthy</span>
+          </div>
+          <div>
+            <BatteryCharging size={16} />
+            <strong>08</strong>
+            <span>Low battery</span>
+          </div>
+          <div>
+            <Signal size={16} />
+            <strong>05</strong>
+            <span>Weak signal</span>
+          </div>
+          <div>
+            <CircleDot size={16} />
+            <strong>00</strong>
+            <span>Offline</span>
+          </div>
+        </div>
+        <div className="detail-table health-detail-table">
+          {points.slice(0, 4).map(point => (
+            <button
+              className="detail-row"
+              key={point[0]}
+              onClick={() =>
+                openSensor({
+                  id: point[0],
+                  fill: point[1],
+                  status:
+                    point[1] >= 95
+                      ? "Critical"
+                      : point[1] >= 80
+                        ? "Pre-alert"
+                        : "Normal",
+                  ward: point[2],
+                  crew: point[3],
+                  label: point[4],
+                })
+              }
+            >
+              <span className="health-icon green">
+                <Wifi size={14} />
+              </span>
+              <span className="row-primary">
+                <strong>{point[0]}</strong>
+                <small>{point[2]} · Last seen 2 min ago</small>
+              </span>
+              <span>86% battery</span>
+              <span className="mint-text">OK</span>
+              <ChevronRight size={15} />
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  if (view === "Citizen Reports")
+    return (
+      <section className="detail-view">
+        <SectionHead
+          icon={Users}
+          title="Citizen reports"
+          description="Correlate public reports with sensor alerts to prioritize response"
+          action={
+            <button
+              className="button primary"
+              onClick={() => toastAction("Citizen report intake opened")}
+            >
+              Add report <Plus size={14} />
+            </button>
+          }
+        />
+        <div className="citizen-grid">
+          {[
+            [
+              "09:21",
+              "East Canal Road",
+              "Water rising across the service lane",
+              "Matched with MH-0427",
+              "Verified",
+            ],
+            [
+              "09:12",
+              "Millers Junction",
+              "Flooding at the bus stop entrance",
+              "Matched with MH-0534",
+              "Verified",
+            ],
+            [
+              "08:48",
+              "Purasawalkam High Road",
+              "Blocked drain near house no. 18",
+              "No sensor data",
+              "New",
+            ],
+          ].map(([time, location, description, correlation, status]) => (
+            <button
+              className="citizen-card"
+              key={time + location}
+              onClick={() =>
+                toastAction(`Citizen report from ${location} opened`)
+              }
+            >
+              <div>
+                <span>{time} IST</span>
+                <em className={status === "New" ? "amber-text" : "mint-text"}>
+                  {status}
+                </em>
+              </div>
+              <strong>{location}</strong>
+              <p>{description}</p>
+              <small>
+                <span className="correlation-dot" />
+                {correlation}
+              </small>
+              <ChevronRight size={15} />
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  return (
+    <section className="detail-view">
+      <SectionHead
+        icon={Settings2}
+        title="Workspace settings"
+        description="Configure operating city, roles, alerts, and report delivery"
+        action={
+          <div className="role-switcher">
+            <span>Current user</span>
+            <button
+              className={role === "Admin" ? "active" : ""}
+              onClick={() => onRoleChange("Admin")}
+            >
+              Admin
+            </button>
+            <button
+              className={role === "Employee" ? "active" : ""}
+              onClick={() => onRoleChange("Employee")}
+            >
+              Employee
+            </button>
+            {role === "Employee" && (
+              <select
+                value={employeeCrew}
+                onChange={event => onEmployeeChange(event.target.value)}
+              >
+                <option value="Crew Alpha">Crew Alpha</option>
+                <option value="Crew Bravo">Crew Bravo</option>
+                <option value="Crew Charlie">Crew Charlie</option>
+                <option value="Crew Delta">Crew Delta</option>
+              </select>
+            )}
+          </div>
+        }
+      />
+      <div className="settings-list">
+        {[
+          ["Operating city", "Chennai Corporation · North zone", MapIcon],
+          ["Alert thresholds", "Adaptive 80–95% · two-stage escalation", Zap],
+          ["Notifications", "Control log, ticket updates", Bell],
+          ["User roles", "Commissioner view · 4 operators", Users],
+          ["Weekly reports", "Every Monday · 08:00 IST", ClipboardList],
+        ].map(([title, description, Icon]) => (
+          <button
+            key={String(title)}
+            onClick={() => toastAction(`${String(title)} settings opened`)}
+          >
+            <span className="settings-icon">
+              {createElement(Icon as IconType, { size: 16 })}
+            </span>
+            <div>
+              <strong>{String(title)}</strong>
+              <small>{String(description)}</small>
+            </div>
+            <ChevronRight size={15} />
+          </button>
+        ))}
+      </div>
+      <a
+        className="founder-profile-panel"
+        href="https://v0-anbumathi-chezhian-2203.vercel.app/"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <div className="founder-profile-mark">AC</div>
+        <div>
+          <span className="map-side-label">FOUNDER & BUILDER</span>
+          <h2>Anbumathi Chezhian.M</h2>
+          <p>
+            Electronics & IoT Developer · Building connected systems from sensor
+            to cloud.
+          </p>
+          <strong>
+            Open founder portfolio <ExternalLink size={14} />
+          </strong>
+        </div>
+      </a>
+    </section>
+  );
+}
+export default function Home() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [role, setRole] = useState<Role>("Employee");
+  const [activeCrew, setActiveCrew] = useState<string>("Crew Alpha");
+  const [activeView, setActiveView] = useState<View>("Overview");
+  const [assignments] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      tickets
+        .filter(item => item.status === "Open")
+        .map((item, index) => [
+          item.id,
+          employeeCrews[index % employeeCrews.length],
+        ])
+    )
+  );
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [ticket, setTicket] = useState<(typeof tickets)[number] | null>(null);
+  const [historyEntry, setHistoryEntry] = useState<HistoryEntry | null>(null);
+  const [closedTicketIds, setClosedTicketIds] = useState<string[]>([]);
+  const [verificationTicketIds, setVerificationTicketIds] = useState<string[]>(
+    []
+  );
+  const [proofPhotos, setProofPhotos] = useState<Record<string, string[]>>({});
+  const [ticketStatusOverrides, setTicketStatusOverrides] = useState<
+    Record<string, string>
+  >({});
+  const [assignmentOverrides, setAssignmentOverrides] = useState<
+    Record<string, string>
+  >({});
+  const historyQuery = trpc.ticketHistory.list.useQuery();
+  const profileQuery = trpc.workforce.profiles.useQuery();
+  const profilesSeeded = useRef(false);
+  const assignmentsSeeded = useRef(false);
+  const assignmentQuery = trpc.workforce.assignments.useQuery();
+  const statusQuery = trpc.workforce.statuses.useQuery();
+  const seedProfiles = trpc.workforce.seedProfiles.useMutation();
+  const assignTicket = trpc.workforce.assign.useMutation();
+  const jarvisAssignmentQuery = trpc.workforce.jarvisAssignments.useQuery();
+  const recordJarvisAssignment =
+    trpc.workforce.recordJarvisAssignment.useMutation();
+  const updateTicketStatus = trpc.workforce.updateStatus.useMutation();
+  const recordApproval = trpc.ticketHistory.recordApproval.useMutation();
+  const verifyAdminPasscode = trpc.auth.verifyAdminPasscode.useMutation();
+  useEffect(() => {
+    if (historyQuery.data?.length)
+      setClosedTicketIds(current =>
+        Array.from(
+          new Set([
+            ...current,
+            ...historyQuery.data.map(entry => entry.ticketId),
+          ])
+        )
+      );
+  }, [historyQuery.data]);
+  const persistedAssignments = useMemo(
+    () =>
+      Object.fromEntries(
+        (assignmentQuery.data ?? []).map(entry => [
+          entry.ticketId,
+          entry.crewName,
+        ])
+      ),
+    [assignmentQuery.data]
+  );
+  const persistedStatuses = useMemo(
+    () =>
+      Object.fromEntries(
+        (statusQuery.data ?? []).map(entry => [entry.ticketId, entry.status])
+      ),
+    [statusQuery.data]
+  );
+  const assignedTickets = tickets.map(item => ({
+    ...item,
+    status:
+      ticketStatusOverrides[item.id] ??
+      persistedStatuses[item.id] ??
+      item.status,
+    crew:
+      assignmentOverrides[item.id] ??
+      persistedAssignments[item.id] ??
+      assignments[item.id] ??
+      item.crew,
+  }));
+  useEffect(() => {
+    if (
+      !profilesSeeded.current &&
+      !profileQuery.data?.length &&
+      !profileQuery.isLoading &&
+      !seedProfiles.isPending
+    ) {
+      profilesSeeded.current = true;
+      seedProfiles.mutate({
+        profiles: employeeCrews.map(crewName => ({
+          crewName,
+          displayName: crewName.replace("Crew ", "") + " field operator",
+        })),
+      });
+    }
+  }, [profileQuery.data, profileQuery.isLoading, seedProfiles.isPending]);
+  useEffect(() => {
+    if (!assignmentsSeeded.current && !assignmentQuery.isLoading) {
+      const missing = tickets.filter(
+        item => item.status === "Open" && !persistedAssignments[item.id]
+      );
+      if (missing.length) {
+        assignmentsSeeded.current = true;
+        missing.forEach(item => {
+          const crewName = assignments[item.id] ?? employeeCrews[0];
+          void assignTicket.mutateAsync({
+            ticketId: item.id,
+            crewName,
+            assignedBy: "JARVIS autonomous assignment",
+          });
+          void recordJarvisAssignment
+            .mutateAsync({
+              ticketId: item.id,
+              crewName,
+              assignedBy: "JARVIS autonomous assignment",
+            })
+            .then(() => void jarvisAssignmentQuery.refetch());
+        });
+      }
+    }
+  }, [assignmentQuery.isLoading, persistedAssignments]);
+  const executeVoiceCommand = (command: string) => {
+    if (role !== "Admin")
+      return toastAction("Only Admin can execute ticket commands");
+    const ticketMatch = command.match(/(TKT[- ]?\d+)/i);
+    const crewMatch = command.match(/(Crew (?:Alpha|Bravo|Charlie|Delta))/i);
+    const statusMatch = command.match(
+      /\b(Open|In Progress|Resolved|Closed)\b/i
+    );
+    const ticketId = ticketMatch?.[1]?.replace(" ", "-").toUpperCase();
+    if (!ticketId) return toastAction("No ticket ID found");
+    if (crewMatch) {
+      setAssignmentOverrides(current => ({
+        ...current,
+        [ticketId]: crewMatch[1],
+      }));
+      void assignTicket.mutateAsync({ ticketId, crewName: crewMatch[1] });
+      void recordJarvisAssignment
+        .mutateAsync({
+          ticketId,
+          crewName: crewMatch[1],
+          assignedBy: "JARVIS autonomous assignment",
+        })
+        .then(() => void jarvisAssignmentQuery.refetch());
+      speakText(`I did assigned the ticket ${ticketId} to ${crewMatch[1]}.`);
+      toastAction(`I did assigned the ticket ${ticketId} to ${crewMatch[1]}.`);
+    }
+    if (statusMatch) {
+      const nextStatus = statusMatch[1];
+      setTicketStatusOverrides(current => ({
+        ...current,
+        [ticketId]: nextStatus,
+      }));
+      void updateTicketStatus.mutateAsync({
+        ticketId,
+        status: nextStatus,
+        updatedBy: "JARVIS voice command",
+      });
+      toastAction(`${ticketId} status updated to ${nextStatus}`);
+    }
+  };
+  const activeTickets = assignedTickets.filter(
+    item => !closedTicketIds.includes(item.id)
+  );
+  const activeAlertsCount = alerts.filter(
+    item => !isAlertClosed(item, closedTicketIds)
+  ).length;
+  const [sensor, setSensor] = useState<{
+    id: string;
+    fill: number;
+    status: string;
+    ward?: string;
+    crew?: string;
+    label?: string;
+  } | null>(null);
+  const navigate = (view: View) => {
+    if (
+      role === "Employee" &&
+      !["My Tasks", "Alerts", "JARVIS", "Settings"].includes(view)
+    ) {
+      toastAction("Admin access required for command-centre views");
+      return;
+    }
+    setActiveView(view);
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const openTicket = (id: string) => {
+    const found = assignedTickets.find(item => item.id === id);
+    if (found && !closedTicketIds.includes(found.id)) setTicket(found);
+  };
+  const saveProofPhotos = (id: string, photos: string[]) =>
+    setProofPhotos(current => ({ ...current, [id]: photos }));
+  const requestVerification = (id: string) => {
+    setVerificationTicketIds(current =>
+      current.includes(id) ? current : [...current, id]
+    );
+    toastAction(`Verification sent to notifications · ${id}`);
+    setTicket(null);
+  };
+  const approveTicket = (id: string) => {
+    const item = assignedTickets.find(candidate => candidate.id === id);
+    if (!item) return;
+    const point = points.find(candidate => candidate[0] === item.manhole);
+    recordApproval.mutate(
+      {
+        ticketId: item.id,
+        manhole: item.manhole,
+        title: item.title,
+        status: "Approved",
+        crew: item.crew,
+        deadline: item.deadline,
+        ward: point?.[2],
+        fill: point?.[1],
+        proofPhotos: proofPhotos[id] ?? [],
+        details: `Approved after field completion review for ${item.title}. Proof-of-work was inspected in the notification queue.`,
+        approvedBy: "ANBU · Commissioner view",
+      },
+      {
+        onSuccess: () => {
+          setClosedTicketIds(current => Array.from(new Set([...current, id])));
+          setVerificationTicketIds(current =>
+            current.filter(itemId => itemId !== id)
+          );
+          setTicket(null);
+          void historyQuery.refetch();
+          toastAction(`${id} approved, archived, and closed`);
+        },
+        onError: () =>
+          toastAction(`Could not archive ${id} · check database connection`),
+      }
+    );
+  };
+  const openSensor = (point: {
+    id: string;
+    fill: number;
+    status: string;
+    ward?: string;
+    crew?: string;
+    label?: string;
+  }) => setSensor(point);
+  const activeProfile = (profileQuery.data ?? []).find(
+    profile => profile.crewName === activeCrew
+  );
+  const employeeName =
+    activeProfile?.displayName ??
+    activeCrew.replace("Crew ", "") + " field operator";
+  const changeEmployeeProfile = (crewName: string) => {
+    setActiveCrew(crewName);
+    setRole("Employee");
+    setActiveView("My Tasks");
+    toastAction(`Signed in as ${crewName}`);
+  };
+  const verifyAdmin = async (password: string) => {
+    try {
+      await verifyAdminPasscode.mutateAsync({ passcode: password });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const changeRole = async (nextRole: Role) => {
+    if (nextRole === "Admin") {
+      const password = window.prompt("Enter Admin password");
+      if (!password || !(await verifyAdmin(password))) {
+        toastAction("Admin access denied");
+        return;
+      }
+    }
+    setRole(nextRole);
+    setActiveView(nextRole === "Employee" ? "My Tasks" : "Overview");
+    toastAction(`Switched to ${nextRole} workspace`);
+  };
+  const dispatch = (crew: string) => {
+    toastAction(`${crew} dispatch recorded in the control log`);
+  };
+  const signIn = (nextRole: Role, crew: string) => {
+    setRole(nextRole);
+    setActiveCrew(crew);
+    setLoggedIn(true);
+    setActiveView(nextRole === "Admin" ? "Overview" : "My Tasks");
+    toastAction(`Signed in as ${nextRole === "Admin" ? "Admin" : crew}`);
+  };
+  if (!loggedIn)
+    return <LoginScreen onLogin={signIn} onAdminAuth={verifyAdmin} />;
+  return (
+    <div className="app-shell">
+      <aside className={`sidebar ${mobileMenuOpen ? "sidebar-open" : ""}`}>
+        <div className="brand-lockup">
+          <div className="brand-mark">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div>
+            <div className="brand-name">SSOP</div>
+            <div className="brand-subtitle">Smart Sewer Operations</div>
+          </div>
+          <button
+            className="sidebar-close mobile-only"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="city-switcher">
+          <div className="city-emblem">CH</div>
+          <div className="city-copy">
+            <span className="eyebrow">Operating city</span>
+            <strong>Chennai Corporation</strong>
+          </div>
+          <ChevronDown size={15} className="muted-icon" />
+        </div>
+        <nav className="nav-groups">
+          {(role === "Admin"
+            ? menu
+            : [
+                {
+                  label: "Employee workspace",
+                  items: [
+                    { label: "My Tasks", icon: ClipboardList },
+                    { label: "Alerts", icon: Bell },
+                    { label: "JARVIS", icon: Sparkles },
+                    { label: "Settings", icon: Settings2 },
+                  ],
+                },
+              ]
+          ).map(group => (
+            <div className="nav-group" key={group.label}>
+              <div className="nav-label">{group.label}</div>
+              {group.items.map(item => {
+                const Icon = item.icon;
+                const active = activeView === item.label;
+                return (
+                  <button
+                    className={`nav-item ${active ? "active" : ""}`}
+                    key={item.label}
+                    onClick={() => navigate(item.label as View)}
+                  >
+                    <Icon size={17} />
+                    <span>{item.label}</span>
+                    {(() => {
+                      const itemCount =
+                        item.label === "Alerts"
+                          ? activeAlertsCount
+                          : item.label === "Tickets"
+                            ? activeTickets.length
+                            : 0;
+                      return itemCount > 0 ? <b>{itemCount}</b> : null;
+                    })()}
+                    {active && <span className="active-rail" />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+        <div className="sidebar-bottom">
+          <a
+            className="founder-card"
+            href="https://v0-anbumathi-chezhian-2203.vercel.app/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <div className="founder-avatar">AC</div>
+            <div className="founder-copy">
+              <span>FOUNDER</span>
+              <strong>Anbumathi Chezhian.M</strong>
+              <small>Electronics & IoT Developer</small>
+            </div>
+            <ExternalLink size={14} />
+            <div className="founder-hover-summary">
+              <span>FEATURED IOT PROJECTS</span>
+              <strong>Simple Hackpad · DARK SIGNAL</strong>
+              <small>RaspCamX · WinXport · ASTRADEV</small>
+              <em>Hover to preview · Open portfolio for details</em>
+            </div>
+          </a>
+          <div className="monsoon-card">
+            <div className="monsoon-icon">
+              <CloudRain size={17} />
+            </div>
+            <div>
+              <strong>Monsoon mode</strong>
+              <span>Active · 18 days</span>
+            </div>
+            <span className="live-dot" />
+          </div>
+          <div className="user-card">
+            <div className="avatar">AN</div>
+            <div className="user-copy">
+              <strong>{role === "Admin" ? "ANBU" : "Field operator"}</strong>
+              <span>
+                {role === "Admin" ? "Commissioner view" : "Employee view"}
+              </span>
+            </div>
+            <MoreHorizontal size={17} className="muted-icon" />
+          </div>
+        </div>
+      </aside>
+      <div className="main-area">
+        <header className="topbar">
+          <div className="topbar-left">
+            <button
+              className="mobile-menu mobile-only"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <Menu size={19} />
+            </button>
+            <div>
+              <div className="breadcrumb">
+                <span>Chennai / North zone</span>
+                <ChevronRight size={13} />
+                <strong>{activeView}</strong>
+              </div>
+              <h1>
+                {activeView === "Overview" ? "Command centre" : activeView}
+              </h1>
+            </div>
+          </div>
+          <div className="topbar-actions">
+            <div className="system-status">
+              <span className="live-dot" /> All systems operational
+            </div>
+            <VoiceUpdate
+              text={`${activeAlertsCount} active alerts and ${activeTickets.length} open tickets require attention.`}
+            />
+            <div className="topbar-divider" />
+            <button
+              className="icon-button search-button"
+              onClick={() =>
+                toastAction("Search across manholes, tickets and wards")
+              }
+            >
+              <Search size={18} />
+            </button>
+            <button
+              className="icon-button notification-button"
+              onClick={() => navigate("Alerts")}
+            >
+              <Bell size={18} />
+              <span>{verificationTicketIds.length}</span>
+            </button>
+            <button
+              className="topbar-profile"
+              onClick={() => navigate("Settings")}
+            >
+              <div className="avatar small">AN</div>
+              <ChevronDown size={14} />
+            </button>
+          </div>
+        </header>
+        <main className="content">
+          {activeView === "Overview" && role === "Admin" ? (
+            <Overview
+              navigate={navigate}
+              openTicket={openTicket}
+              openSensor={openSensor}
+              sync={() =>
+                toastAction("Live telemetry synced · 1,248 devices checked")
+              }
+              closedTicketIds={closedTicketIds}
+              activeAlertsCount={activeAlertsCount}
+            />
+          ) : (
+            <DetailView
+              view={activeView}
+              navigate={navigate}
+              openTicket={openTicket}
+              openSensor={openSensor}
+              closedTicketIds={closedTicketIds}
+              verificationTicketIds={verificationTicketIds}
+              proofPhotos={proofPhotos}
+              activeTickets={activeTickets}
+              historyEntries={(historyQuery.data ?? []) as HistoryEntry[]}
+              historyLoading={historyQuery.isLoading}
+              onOpenHistory={setHistoryEntry}
+              jarvisAssignmentLogs={
+                (jarvisAssignmentQuery.data ?? []) as JarvisAssignmentLog[]
+              }
+              onApprove={approveTicket}
+              role={role}
+              onRoleChange={changeRole}
+              onEmployeeChange={changeEmployeeProfile}
+              employeeCrew={activeCrew}
+              employeeName={employeeName}
+              onVoiceCommand={executeVoiceCommand}
+            />
+          )}
+        </main>
+        <footer className="footer">
+          <span>SSOP control room · North zone</span>
+          <span>
+            <span className="live-dot" /> Telemetry stream healthy
+          </span>
+          <span>v2.1 prototype</span>
+        </footer>
+      </div>
+      <TicketDrawer
+        role={role}
+        ticket={ticket}
+        onClose={() => setTicket(null)}
+        onToast={toastAction}
+        onDispatch={dispatch}
+        onRequestVerification={requestVerification}
+        proofPhotos={ticket ? (proofPhotos[ticket.id] ?? []) : []}
+        onPhotosChange={saveProofPhotos}
+      />
+      <HistoryDrawer
+        entry={historyEntry}
+        onClose={() => setHistoryEntry(null)}
+      />
+      <SensorDrawer
+        point={sensor}
+        onClose={() => setSensor(null)}
+        onTicket={() => {
+          setSensor(null);
+          openTicket("TKT-1098");
+        }}
+      />
+    </div>
+  );
+}
